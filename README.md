@@ -33,7 +33,7 @@ snprintf(buf, sizeof(buf), "%s", argv[1]);
 ```
 if (strlen(argv[1]) >= sizeof(buf)) {
     printf("Input too long\n");
-    return 1;
+    return 1;  //出错退出（通用错误）
 }
 strcpy(buf, argv[1]);
 ```
