@@ -94,6 +94,7 @@ buf[7] = '\0';
 防止溢出
 强制字符串结束
 [2]使用 snprintf（更安全）
+char buf[8];
 snprintf(buf, sizeof(buf), "%s", argv[1]);
 优点：
 自动截断
