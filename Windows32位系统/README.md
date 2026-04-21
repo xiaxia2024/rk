@@ -86,7 +86,7 @@ check = 0x41414141
 更精确一点说：
 基于 strcpy 的栈缓冲区溢出（stack-based buffer overflow）
 
-[1]使用安全函数替代 strcpy,改成 strncpy
+[1]使用安全函数strncpy替代 strcpy
 strncpy(buf, argv[1], sizeof(buf) - 1);
 buf[7] = '\0';
 优点：
