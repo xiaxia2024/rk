@@ -223,3 +223,82 @@ finally:
 </details>
 
 ----------------------------------------------------------------------------
+
+<details>
+<summary>Socket网络编程</summary>
+
+```
+connect(address):连接远程计算机
+send(bytes[,flags]):发送数据
+recv(bufsize[,flags]):接收数据
+bind(address):绑定地址
+listen(backlog):开始监听，等待客户端连接
+accept():响应客户端的一个请求，接受一个连接
+```
+</details>
+
+<details>
+<summary>服务端代码</summary>
+
+```
+# coding：utf-8
+import socket
+language = {'what is your name':'I am Tom','how old are you':'25','bye':'bye!'}
+HOST = '127.0.0.1"
+POTR = 6666
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM) //AF_INET：IPv4，SOCK_STREAM：TCP面向连接
+s.bind((HOST,PORT))
+s.listen(1) //1表示等待队列最大长度
+print("Listing at port 6666")
+conn,addr = s.accept() //通信套接字，客户端地址=阻塞等待
+print('Connect by: ',addr)
+while True: //无限循环接收消息
+    data = conn.recv(1024)
+    data = data.decode() //解码
+    if not data:
+        break //如果客户端关闭连接,返回空数据
+    print('Received message:',data)
+
+    conn.sendall(language.get(data,'Nothing').encode())
+    //自动回复;.encode():把字符串变成字节；
+    //language.get("what is your name", "Nothing")；
+    //conn.sendall(b'I am Tom')；
+    //encode() —— 编码：把字符串(str)变成字节(bytes)
+
+conn.close() //关闭客户端连接
+s.close() //释放端口
+```
+
+</details>
+
+<details>
+<summary>客户端代码</summary>
+
+```
+# coding:utf-8
+import socket
+import sys
+HOST = "127.0.0.1"
+PORT = 6666
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+try:
+    s.connect((HOST,PORT))
+except Exception as e:
+    print('server not found!')
+    sys.exit()
+while True: //无限循环
+    c = input('YOU SAY:') //然后在键盘输入些什么
+    s.sendall(c.encode())
+    data = s.recv(1024)
+    data = data.decode()
+    print('Received:',data)
+    if c.lower() == '再见': //.lower()大写转小写
+        break
+s.close()
+```
+
+</details>
+
+----------------------------------------------------------------------------
+
+----------------------------------------------------------------------------
