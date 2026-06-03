@@ -301,4 +301,79 @@ s.close()
 
 ----------------------------------------------------------------------------
 
+<details>
+<summary>可执行文件转换_PyInstaller</summary>
+
+```
+https://pypi.org/project/PyInstaller
+
+在windows：
+>>> python setup.py install
+需要准备好要打包的python文件 和 需要绑定的图标类型.ico
+>>> pyinstaller -F -i snail.ico xx.py
+会存储在dist文件夹,运行.exe
+
+在Linux：
+>>> python setup.py install
+>>> pyinstaller -F xx.py
+~/dist$ ./xx.py
+```
+
+</details>
+
+----------------------------------------------------------------------------
+
+<details>
+<summary>Proof of Concept,POC 渗透概论验证</summary>
+
+```
+Exploit,EXP 漏洞利用
+渗透测试框架 Metasploit、Pocsuite、Fsociety
+
+Pocsuite由‘知道创宇404实验室'打造的开源的远程漏洞测试框架，同时也是POC开发框架
+Pocsuite 3是POC/EXP 的SDK开发包，Seebug网站由几千个基于Pocsuite的POC/EXP ，可以基于Poscuite 3 进行二次开发
+
+Pocsuite 3集成：
+ZoomEye API:批量获取指定条件的测试目标，使用ZoomEye的Dork进行搜索
+Seebug API:读取指定组件或者类型的漏洞的POC或者本地POC，自动化测试
+Ceye API:验证盲打的DNS和HTTP请求
+
+安装：
+>>> git clone git@github.com:nopesec/pocsuite3.git
+或是
+>>> wget https://github.com/knownsec/pocsuite3/archive/master.zip
+或是
+>>> pip install pocsuite3
+验证：
+>>> pocsuite -version
+```
+
+</details>
+
+
+<details>
+<summary>Pocsuite</summary>
+
+```
+--verify参数调用_verify方法：验证目标是否存在漏洞
+--attack参数调用_attack方法：向目标发起攻击
+----------------------------------------------------------------------------
+def _attack(self):
+    result = {}
+    ...
+    return self.parse_output(result)
+
+def _verify(self):
+    result = {}
+    ...
+    return self.parse_output(result)
+----------------------------------------------------------------------------
+[1]Verify验证模式；-r poc脚本路径；-u 目标地址;
+>>> python pocsuite.py -r pocs/test1.py -u https://www.xxx.com --verify
+[2]批量验证;-f 目标IP写到txt文本
+>>> python pocsuite.py -r pocs/test1.py -f url.txt --verify
+```
+
+</details>
+
 ----------------------------------------------------------------------------
