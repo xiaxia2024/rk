@@ -83,4 +83,60 @@ AppScan：安装在windows系统上，对Web应用进行漏洞扫描和安全测
 
 </details>
 
+
+<details>
+<summary>python 控制结构</summary>
+
+```
+顺序结构、选择结构、循环结构
+----------------------------------------------------------------------------
+选择结构
+#!/user/bin/pyton
+#coding:utf-8
+studentScore = int(input('Scores of students: '))
+if (studentScore < 60):
+  print('不及格‘）
+if (60 <= studentScore < 80):
+  print('良好‘）
+if (strdentScore >= 80):
+  print('优秀')
+----------------------------------------------------------------------------
+循环结构：for循环一般用于有明显边界范围的情况，while循环一般用于循环次数难以确定的情况
+#！/usr/bin/python
+#coding:utf-8
+Sum = 0
+for i in range(1,101):
+    Sum = Sum + i
+else:
+    print('Sum = ', Sum)
+
+运行结果：5050
+
+#!/usr/bin/python
+#coding:utf=8
+x = int(input('x='))
+Sum = 0
+while x != 0 :
+    Sum = Sum + x
+    x = x - 1
+else:
+    print('Sum=', Sum)
+
+输入100，运行结果：5050
+输入1000，运行结果：500500
+----------------------------------------------------------------------------
+
+</details>
+
+<details>
+<summary>文件处理</summary>
+
+```
+数据库文件、图像文件、音频文件、视频文件、文本文化等
+文本文件：常规字符串，由文本行组成，每行通常由换行符'\n'结尾，读取、写入、删除、修改，关闭并保持
+
+```
+
+</details>
+
 ----------------------------------------------------------------------------
