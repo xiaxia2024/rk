@@ -605,6 +605,7 @@ def _attack(self):
 //Jinja2 SSTI Payload
 //运行
 root@kali:~/pocsuite3-master# pocsuite -r test2.py -u http://127.0.0.1:8000 --attack
+```
 
 </details>
 
