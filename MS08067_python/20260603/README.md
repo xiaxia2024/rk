@@ -662,3 +662,160 @@ root@kali:~/pocsuite3-master# pocsuite -r test3.py -u http://x.x.x.x:8000/ --att
 </details>
 
 ----------------------------------------------------------------------------
+#### 信息搜索
+
+<details>
+<summary>IP查询</summary>
+
+```
+>>> import socket
+>>> ip = socket.gethostbyname('www.baidu.com') //gethostbyname()函数
+>>> print(ip)
+```
+
+</details>
+
+<details>
+<summary>whois查询</summary>
+
+```
+pip install python-whois //模块
+>>> from whois import whois
+>>> data = whois('www.baidu.com')
+>>> print(data)
+```
+
+</details>
+
+<details>
+<summary>子域名挖掘subdomain.py</summary>
+
+```
+#! /usr/bin/env python
+# _*_ coding:utf-8 _*_
+import requests
+from bs4 improt BeautifulSoup
+from usrllib.parse import urlparse
+import sys
+
+def bing_search(site, pages):
+    Subdomain = [] #以列表形式存储子域名
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+        'Accept': 'texe/html,application/xhtml+xml,application/xml;q=0.9, */*;q=0.8',
+        'Referer': "https://cn.bing.com",
+        'Cookie': 'MUID=XXXXXXXXX&t=6" #填写相应的Cookie值
+    }
+    for i in range(1,int(pages)+1):
+        url = "https://cn.bing.com/search?q=site%3a"+site+"&go=Search&qs=ds&first="+ str((int i)-1)*10) + "&FORM=PERE"
+        html = requests.get(url, heades=headers)
+        soup = BeautifulSoup(html.content, 'html.parser')
+        job_bt = soup.findAll('h2')
+        for i in job_bt:
+            link = i.a.get('href')
+            domain = str(urlparse(link).scheme + "://" + urlparse(link).netloc)
+            if domain in Subdomain:
+                pass
+            else:
+                Subdomain.append(domain)
+                print(domain)
+
+if __name__ == '__main__':
+    if len(sys.argv) == 3:
+        site = sys.argv[1]
+        page = sys.argv[2]
+    else:
+        print ("usage: %s baidu.com 10" % sys.argv[0]) #输出帮助信息
+        sys.exit(-1)
+    Subdomain = bing_search(site, page)
+
+//运行：
+//# python3 subdomain.py baidu.com 15
+//输入baidu.com,对该域名进行子域收集,15为引擎页数
+```
+</details>
+
+<details>
+<summary>邮件爬取</summary>
+
+```
+import sys
+import getopt
+import requests
+from bs4 import BeautifulSoup
+import re
+
+//[1]
+//没有异常发送，执行定义的start()函数，通过sys.argv[]实现外部指令的接受。
+//sys.argv[0]表示代码本身的文件路径
+//sys.argv[1:]表示从第一个命令行参数到输入最后一个命令行参数，存储形式为list类型
+
+if __name__ == '__main__':
+    #定义异常
+    try:
+        start(sys.argv[1:])
+    except  KeyboardInterrupt:
+        print("interrupted by user, killing all threads...")
+
+//[2]
+//编写命令行参数处理功能
+//getopt.getopt()函数处理命令行参数，短选项'-字母',长选项'--单词'
+//opts为一个两元组列表，(选项串,附加参数)
+//通过for语句循环输出opts列表中的数值并赋值给自定义的变量
+
+#主函数，传入用户输入的参数
+def start(argv):
+    url = ""
+    pages = ""
+    if len(sys.argv) < 2:
+        print("-h 帮助信息;\n")
+        sys.exit()
+    #定义异常处理
+    try:
+        banner()
+        opts,args = getopt.getopt(argv, "-u:-p:-h")
+    except getopt.GetoptError:
+        print('Error an argument!')
+        sys.exit()
+    for opt ,arg in opts:
+        if opt == "-u":
+            url = arg
+        elif opt == "-p":
+            pages = arg
+        elif opt == "-h":
+            print(usage())
+    launcher(url ,pages)
+
+//[3]
+//输出帮助信息
+//开头: \033[显示方式; 前景色 ; 背景色m
+//结尾部分： \033[0m
+
+//print('\033[0;30;41m 字样 \033[0m')
+
+//print('\033[0;36;47m 字样 \033[0m')
+
+#banner信息
+def banner()
+print('\033[1;34m###############################################################################\033[0m\n'
+      '\033[1;34m##################\033[1;32字样\033[1;34m#######################################\033[0m\n'
+      '\033[1;34m###############################################################################\033[0m\n'
+#使用规则
+def usage():
+    print('-h: --help;')
+    print('-u: --url;')
+    print('-p: --pages;')
+    print('eg: python -u "www.baidu.com" -p 100'+'\n')
+    sys.exit()
+##未授权函数检测
+
+//[4]
+//确定搜索邮件的关键字
+//调用bing_search()和baidu_search()两个函数
+//获取的结果进行列表合并，去重之后，循环输出
+
+#漏洞回调函数
+```
+
+</details>
+
