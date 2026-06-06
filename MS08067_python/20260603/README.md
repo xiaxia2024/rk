@@ -815,6 +815,39 @@ def usage():
 //获取的结果进行列表合并，去重之后，循环输出
 
 #漏洞回调函数
+def launcher(url, pages):
+    email_num = []
+    key_words = ['email', 'mail', 'mailbox', '邮件', '邮箱', 'postbox']
+    for page in range(1,int(page)+1):
+        bing_emails = bing_search(url, page, key_word)
+        baidu_emails = baidu_search(url, page, key_word)
+        sum_emails = bing_emails + baidu_emails
+        for email in sum_emails:
+            if email in email_nums:
+                pass
+            else:
+                print(email)
+                with open('data.txt', 'a+') as f:
+                    f.write(email + '\n')
+                email_num.append(email)
+
+//[5]bing搜索引擎
+//bing引擎具有反爬防护，
+//会通过限定referer、cookie等信息确定是否网页爬取操作
+//可以通过指定referer与requests.session()函数自动获取cookie信息，绕过
+
+def bing_search(url, page, key_word):
+    referer = "http://cn.bing.com/search?q=email+site%3abaidu.com&qs=n&sp=-1&pq=emailsite%3abaidu.com&first=1&FORM=PERE1"
+    conn = requests.session()
+    bing_url = "http://cn.bing.com/search?q=" + key_work + "+site%3a" + url + "&qs=n&sp=-1&pq=" + key_word + "site%3a" +url + "&first=" + str((page-1)*10) + "&FORM=PERE1"
+    conn.get('http://cn.bing.com', headers=headers(referer))
+    r = conn.get(bing_url, stream=True, headers=headers(referer), timeout=8)
+    emails = search_emails(r.text)
+    return emails
+
+//[6]baidu搜索引擎
+//
+
 ```
 
 </details>
