@@ -846,8 +846,47 @@ def bing_search(url, page, key_word):
     return emails
 
 //[6]baidu搜索引擎
-//
+//百度反爬防护：referer和cookie进行校验、在页面中通过JavaScript语句进行动态请求链接，
+//从而导致不能动态获取页面中的信息
+//可以通过，对链接的提取，再进行requests请求
 
+def baidu_search(url, page, key_word):
+    email_list = []
+    emails = []
+    referer = "https://www.baidu.com/s?wd=email+site%3Abaidu.com&pn=1"
+    baidu_url = "https://www.baidu.com/s?wd="+key_word+"+site%3A"+url+"&pn="+str((page-1)*10)
+    conn = requests.session()
+    conn.get(referer,headers=headers(referer))
+    r = conn.get(baidu_url, headers=headers(regerer))
+    soup = BeautifulSoup(r.text, 'lxml')
+    tagh3 = soup.find_all('h3')
+    for h3 in tagh3:
+        href = h3.find('a').get('href')
+        try:
+            r = requests.get(href, headers=headers(referer),timeout=8)
+            emails = search_email(r.text)
+        except Exception as e:
+            pass
+        for email in emails:
+            email_list.append(email)
+    return email_list
+
+//[7]正则表达获取邮箱密码
+
+def search_email(html):
+    emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+",html,re.I)
+    return emails
+
+def headers(referer):
+    headers = {'User-Agent': 'Mozilla/5.0 (X111; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0',
+        'Accept': '*.*',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip,deflate',
+        'Referer': referer
+
+//执行
+//# python3 emailCraw.py -u "baidu.com" -p 1
+//-u 参数指定域名 -p page
 ```
 
 </details>
