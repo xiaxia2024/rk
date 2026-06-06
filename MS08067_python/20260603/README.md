@@ -662,7 +662,7 @@ root@kali:~/pocsuite3-master# pocsuite -r test3.py -u http://x.x.x.x:8000/ --att
 </details>
 
 ----------------------------------------------------------------------------
-#### 信息搜索
+#### 被动信息搜索
 
 <details>
 <summary>IP查询</summary>
@@ -891,3 +891,115 @@ def headers(referer):
 
 </details>
 
+#### 主动信息搜索
+
+<details>
+<summary>基于ICMP的主机发现_Scapy库</summary>
+
+```
+//Internet Control Message Protocol,Internet报文协议)
+//scapy用于发送ping请求和接收目标主机的应答数据
+//差错通知
+//信息查询
+//Scapy库：TCP,UDP,IP,ARP等
+//# python3 -m pip install -i https://pypi.douban.com/simple --pre scapy[complete]
+
+#!/usr/bin/python
+#coding:utf-8
+from scapy.all import *  
+from random import randint  
+from optparse import PotionParser 
+
+//将处理后IP地址传入 Scan()函数
+def main():
+    parser = OptionParser("Usage:%prog -i <target host> ")    #输出帮助信息
+    parser.add_option('-i', type='string', dest='IP', help='specify target host')  #获取IP地址参数
+    options,args = parser.parse_args()
+    print("Scan report for " + options.IP + "\n")
+
+    if '-' in options.IP:
+        for i in range(int(options.IP.split('-')[0].split('.')[3]), int(options.IP.split('-')[1]) + 1):
+            Scan(
+                options.IP.split('.')[0] + '.' + options.IP.split('.')[1] + '.' + options.IP.split('.')[2] + '.' + str(i))
+            time.sleep(0.2)
+        else:
+            Scan(options.IP)
+        print("\nScan finished!...\n")
+
+if __name__ == "__main__":
+    try:
+        main()
+    excetp KeyboardInterrupt:
+        print("interrupted by user, killing all threads...")
+
+//Scan()函数调用ICMP
+def Scan(ip):
+    ip_id = randint(1, 65535)
+    icmp_id = randint(1, 65535)
+    icmp_seq = randint(1, 65535)
+    packet = IP(dst=ip, ttl=64, id=ip_id/ICMP(id=icmp_id, seq=icmp_seq)/b'rootkit'
+    result = sr1(packet, timeout=1, verbose=False)   //      False<----ICMP探测主机存活
+    if result:
+        for rcv in result:
+            scan_ip = rcv[IP].src
+            print(scan_ip + '--->' 'Host is up')
+    else:
+        print(ip + '--->' 'host is down')
+
+//运行
+// # python3 ICMP_host.py -i IP
+```
+
+</details>
+
+<details>
+<summary>基于ICMP的主机发现_Namp库</summary>
+
+```
+// -sn 只测试该主机的状态
+// -PE 表示使用ICMP
+
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+import nmap
+import optparse
+
+//将处理后IP地址传入 NampScan函数
+if __name__ == '__main__':
+    parser = optparse.OptionParser('usage: python %prog -i ip \n\n' 'Example: python %prog -i 192.168.1.1 [192.168.1.1-100]\n')
+
+    # 添加目标IP参数
+    parser.add_option('-i', '--ip', dest='targetIP', default='192.168.1.1', type='string', help='target ip address')
+    options,args = parser.parser_args[])
+
+    if '-' in options.targetIP:
+        for i in range(int(options.targetIP.split('-')[0].split('.')[2], int(options.targetIP.split('-')[1])) + 1):
+            NampScan(options.targetIP.split('.')[0] + '.' + options.targetIP.split('.')[1] + '.' + options.targetIP.split('.')[2] + '.' + str(i))
+    else:
+        NmapScan(options.targetIP)
+
+//NampScan函数 调用nm.scan()函数，发起ping扫描
+//argusments 为Nmap的扫描参数
+// -sn:使用ping进行扫描
+// -PE:使用ICMP的echo请求包(-pp：使用timestamp参数包，-PM：netmask请求包
+
+def NmapScan(targetIP):
+    # 实例化 PortScanner 对象
+    nm = nmap.PortScanner()
+    try:
+        result = nm.scan(hosts=targetIP, arguments='-sn -PE')
+
+        # 对结果进行切片，提取主机状态信息
+        state = resulte['scan'][targetIP]['status']['state']
+        print("[{}] is [{}]".format(targetIP, state))
+    except Exception as e:
+        pass
+
+//运行
+// # python3 nmap_ICMP_find.py -i IP
+
+//缺陷：网络设备对ICMP采取了屏蔽策略时，就会导致扫描结果不准确
+```
+
+</details>
