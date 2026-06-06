@@ -938,7 +938,7 @@ def Scan(ip):
     icmp_id = randint(1, 65535)
     icmp_seq = randint(1, 65535)
     packet = IP(dst=ip, ttl=64, id=ip_id/ICMP(id=icmp_id, seq=icmp_seq)/b'rootkit'
-    result = sr1(packet, timeout=1, verbose=False)   //      False<----ICMP探测主机存活
+    result = sr1(packet, timeout=1, verbose=False)   //      verbose=False<----ICMP探测主机存活?!
     if result:
         for rcv in result:
             scan_ip = rcv[IP].src
@@ -1000,6 +1000,178 @@ def NmapScan(targetIP):
 // # python3 nmap_ICMP_find.py -i IP
 
 //缺陷：网络设备对ICMP采取了屏蔽策略时，就会导致扫描结果不准确
+```
+
+</details>
+
+<details>
+<summary>基于TCP、UDP的主机发现_TCP实现探测主机</summary>
+
+```
+//TCP三次握手原来进行主机存活的探测。 ACK -- 主机存活 -- RST or SYN -- 主机存活 -- SYN/ACK、RST
+//工作原理：flags字段有值，主机存活。
+//flags { SYN建立连接, FIN关闭连接, ACK应答, PSH包含DATA数据传输, RST连接重置, URG紧急指针 }
+
+//编写一个利用TCP实现的活跃主机扫描程序
+>>> ip = IP()
+>>> tcp = TCP()
+>>> r = (ip/tcp)
+>>> r[IP].dst = "IP"
+>>> r[TCP].flags = "A"
+>>> a = st1(r)
+>>> a.display()
+
+//flags=R 即表示REST
+----------------------------------------------------------------------------
+
+import time
+from optparse import OptionParser
+from random import randint
+from scapy.all import *
+
+//Scan()函数
+def main():
+    usage = "Usage: %prog -i <ip address>"
+    parse = OptionParser(usage=usage)
+    parse.add_option("-i", '--ip', type="string", dest="targetIP", help="specify the IP address")
+
+    options, args = parse.parse_args()
+    if '-' in options.targetIP:
+        for i in range(int(options.targetIP.split('-')[0].split('.')[3]), int((options.targetIP.split('-')[1]) + 1):
+            Scan(options.targetIP.split('.')[0] + '.' + options.targetIP.split('.')[1] + '.' + options.targetIP.split('.')[2] + '.' + str(i))
+    else:
+        Scan(options.targetIP)
+
+if __name__ == '__main__':
+    main()
+
+//若flags字段为R，其整型数值为4（REST）
+def Scan(ip):
+    try:
+        dport = random.randint(1, 65535)
+        packet = IP(dst=ip)/TCP(flags="A",dport=dport)
+        response = sr1(packet, timeout=1.0, verbose=0)  // <----- verbose=0 (上一个是 基于ICMP的主机发现_Scapy库）
+        if response:
+            if int(resonse[TCP].flags) == 4:
+                time.sleep(0.5)
+                print(ip + ' ' + "is up")
+            else:
+                print(ip + ' ' + "is down")
+        else:
+            print(ip + ' ' + "is down")
+    except:
+        pass
+
+//运行
+// # python3 tcp_host.py -i X.X.X.120-130
+// Wireshark --> REST的应答数据包如：[RST]
+```
+
+</details>
+
+<details>
+<summary>基于TCP、UDP的主机发现_UDP实现探测主机</summary>
+
+```
+//UDP   User Datagram Protocol,用户数据报协议
+//主机活跃，但端口关闭，返回一个ICMP数据包 unreachable
+
+//编写一个利用UDP实现的活跃主机的扫描程序_Scapy库_端口dport可以是任意值
+>>> ip = IP()
+>>> udp = UDP()
+>>> r = (ip/UDP)
+>>> r[IP].dport = 7345
+>>> a = sr1(r)
+>>> a.display()
+
+// code= port-unreachable //目标主机存活
+----------------------------------------------------------------------------
+#!/usr/bin/python
+import time
+from optparse import OptionParser
+from random import randint
+from scapy.all import *
+
+//Scan()函数
+def main():
+    usage = "Usage: %prog -i <ip address>"
+    parse = OptionParser(usage=usage)
+    parse.add_option("-i", '--ip', type="string", dest="targetIP", help="specify the IP address")
+
+    optons, args = parse.parse_args()
+    if '-' in options.targetIP:
+        for i in range(int(options.targetIP.split('-')[0].split('.')[3]), int(options.targetIP.split('-')[1] + 1):
+            Scan(options.targetIP.split('.')[0] + '.' + options.targetIP.split('.')[1] + '.' + options.targetIP.split('.')[2] + '.' + str(i))
+    else:
+        Scan(options.targetIP)
+if __name__ == '__main__':
+    main()
+
+// proto字段整型数据为1，目标主机存活
+def Scan(ip):
+    try:
+        dport = random.randint(1, 65535)
+        packet = IP(dst=ip)/UDP(dport=dport)
+        response = sr1(packet, timeout=1.0, verbose=0)
+        if response:
+            if int(response[IP].proto) == 1:
+                time.sleep(0.5)
+                print(ip + ' ' + "is up")
+            else:
+                print(ip + ' ' + "is down")
+        else:
+            print(ip + ' ' + "is down")
+    except:
+        pass
+
+//运行
+// # python3 udp_host.py -i X.X.X.105-140
+//Wireshark ---> "Destionation unreachable (port unreachable)"
+```
+
+</details>
+
+<details>
+<summary>TCP、UDP_Nmap库</summary>
+
+```
+result = nm.scan(hosts=targetIP, arguments='-sT')
+# python3 namp_TCP_find.py -i X.X.X.1-140
+
+result = nm.scan(hosts=targetIP, arguments='-PU')
+# python3 namp_UDP_find.py -i X.X.X.1-140
+```
+
+</details>
+
+<details>
+<summary>基于ARP的主机发现_Scapu库(Ether && ARP)</summary>
+
+```
+//ARP中 op 代表消息类型， 1为ARP请求， 2为ARP响应， hwsrc 为 源MAC地址，psrc为 源IP地址， pdst 为 目的IP地址
+
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+import os
+import re
+import optparse
+from scapy.all import *
+
+//通过正则表达式获取 IP地址和MAC地址
+//re.search利用正则匹配返回第一个成功匹配的结果，存在结果则为true
+def HostAddress(iface):
+
+    ipData = os.popen('ifconfig ' + iface)   //os.popen执行后返回执行结果
+    dataLine = ipData.readlines()     //对ipData进行类型转换，再用正则进行匹配
+    if re.search('\w\w:\w\w:\w\w:\w\w:\w\w:\w\w', str(dataLine)): //取MAC地址
+        MAC = re.search('\w\w:\w\w:\w\w:\w\w:\w\w:\w\w', str(dataLine)).group(0) //取出匹配结果
+        if re.search(r((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)', str(dataLine)): //取IP地址
+            IP = re.search(r'((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)', str(dataLine)).group(0)
+    addressInfo = (IP,MAC)
+return addressInfo
+
+//编写ARP探测函数
+
 ```
 
 </details>
