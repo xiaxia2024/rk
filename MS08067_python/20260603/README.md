@@ -1170,8 +1170,56 @@ def HostAddress(iface):
     addressInfo = (IP,MAC)
 return addressInfo
 
-//编写ARP探测函数
+//编写ARP探测函数,自动生成目标进行探测
+//发送ARP包，因为要用到OSI的二层和三层，所以要写成Ether/ARP,因为最低层用到了二层，所以要用srp()发包
+def ArpScan(iface = 'eth0'):
+    mac = HostAddress(iface)[1] //通过HostAddress返回的元组取出MAC
+    ip =  HostAddress(iface)[0] //取出IP地址
+    ipSplit = ip.split('.')
+    ipList = []
+    for i in range(1, 255):
+        ipItem = ipSplit[0] + '.' + ipSplit[1] + '.' + ipSplit[2] + '.' + str(i)
+        ipList.append(ipItem)
+        result = srp(Ether(src = mac, dst = 'FF:FF:FF:FF:FF:FF')/ARP(op=1, hwsrc=mac,hwdst='00:00:00:00:00:00',pdst=iface,timeout=2,verbose=False)
+        resultAns = result[0].res
+    liveHost = [] //存活主机列表
+    number = len(resultAns)  //number为接收到应答包的总数
+    print("=======================")
+    print("ARP 探测结果")
+    print("本机IP地址:" + ip)
+    print("本机MAC地址:" + mac)
+    pritn("=======================")
+    for x in range(number):  
+        IP = resultAns[x][1][1].fields['psrc']
+        MAC = resultAns[x][1][1].fields['hwsrc']
+        liveHost.append([IP, MAC])
+        print("IP:" + IP + "\n\n" + "MAC:" + MAC   )
+        print("=======================")
+    resultFile = open("result", "w")
+    for i in range(len(liveHost)):
+        resuttFile.write(liveHost[i][0] + "\n")
+    resultFile.close()
 
+if __name__ == '__ main__':
+    parser = optpase.OptionParser('usage: python %prog -i interface \n\n' 'Example:python %prog -i eth0\n')
+    parser.add_option('-i', '--iface', dest = 'iface', default='eht0', type = 'string', help = 'interface name')
+    (options, args) = parser.parse_args()
+    ArpScan(options.iface)
+
+//运行
+// # sudo python3 arpscaner.py -i the0
 ```
 
 </details>
+
+details>
+<summary>基于ARP的主机发现_Nmap库</summary>
+
+```
+result = nm.scan(hosts=tragetIP, arguments='-PR')
+
+# python3 nmap_ARP_find.py -i 192.168.61.120-140
+```
+
+</details>
+
