@@ -937,7 +937,7 @@ def Scan(ip):
     ip_id = randint(1, 65535)
     icmp_id = randint(1, 65535)
     icmp_seq = randint(1, 65535)
-    packet = IP(dst=ip, ttl=64, id=ip_id/ICMP(id=icmp_id, seq=icmp_seq)/b'rootkit'
+    packet = IP(dst=ip, ttl=64, id=ip_id)/ICMP(id=icmp_id, seq=icmp_seq)/b'rootkit'
     result = sr1(packet, timeout=1, verbose=False)   //      verbose=False<----ICMP探测主机存活?!
     if result:
         for rcv in result:
@@ -1201,8 +1201,8 @@ def ArpScan(iface = 'eth0'):
     resultFile.close()
 
 if __name__ == '__ main__':
-    parser = optpase.OptionParser('usage: python %prog -i interface \n\n' 'Example:python %prog -i eth0\n')
-    parser.add_option('-i', '--iface', dest = 'iface', default='eht0', type = 'string', help = 'interface name')
+    parser = optpase.OptionParser('usage: python %prog -i interfaces \n\n' 'Example:python %prog -i eth0\n')
+    parser.add_option('-i', '--iface', dest = 'iface', default='eht0', type = 'string', help = 'interfaces name')
     (options, args) = parser.parse_args()
     ArpScan(options.iface)
 
@@ -1212,7 +1212,7 @@ if __name__ == '__ main__':
 
 </details>
 
-details>
+<details>
 <summary>基于ARP的主机发现_Nmap库</summary>
 
 ```
@@ -1223,3 +1223,98 @@ result = nm.scan(hosts=tragetIP, arguments='-PR')
 
 </details>
 
+
+<details>
+<summary>端口探测_Socket模块</summary>
+
+```
+#!/usr/bin/python3
+# -*- coding:utf-8 -*-
+
+import sys
+import socket
+import optparse
+import threading
+import queue
+
+class PortScaner(threading.Thread):
+    def __init__(self, portqueue, ip, timeout=3):
+        threading.Thread.__init__(self)
+        self._portqueue = portqueue
+        self._ip = ip
+        self._timeout = timeout
+
+    def run(self):
+        while True:
+            if self._portqueue.empty():
+                break
+            port = self._portqueue.get(timeout = 0.5)
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(self._timeout)
+                result_code = s.connect_ex((self._ip, port))
+                # sys.stdout.write("[%d]Scan\n" % port)
+                if result_code == 0:  \\若端口开放，则会放回0
+                    sys.stdout.write("[%d] OPEN\n" % port)
+            excetp Exception as e:
+                print(e)
+            finally:
+                s.close()
+
+def StartScan(targetip, port, threadNum):
+    portList = []
+    portNumb = port
+    if '-' in port:
+        for i in range(int(port.split('-')[0]), int(port.split('-')[1])+1):
+            portList.append(i)
+    else:
+        portList.append(int(port))
+    ip = targetip
+    threads = [] //线程列表
+    threadNumber = threadNum //线程数量
+    portQueue = queue.Queue() //队列端口
+
+    for port in portList: //生成端口，加入端口队列
+        portQueue.put(port)
+    for t in range(threadNumber):
+        threads.append(PortScaner(portQueue, ip, timeout=3))
+
+    for thread in threads: //启动线程
+        thread.start()
+    for thread in threads: //阻塞线程
+        thread.join()
+
+if __name__ == '__main__':
+    parser = optparse.OptionParser('Example: python %prog -i 127.0.0.1 -p 80 \n    python %prog -i 127.0.0.1 -p 1-100\n')
+    parser.add_option('-i', '--ip', dest='targetIP',default='127.0.0.1', type = 'string', help = 'target IP')
+    parser.add_option('p', '--port', dest = 'port', default = '80',type = 'string', help = 'scann port')
+    parser.add_option('t', '--thread', dest = 'threadNum', default = 100, type = 'int', help = 'scann thread number')
+    (options, args) = parser.parse_args()
+    StartScan(option.targetIP, options.port, options.threadNum)
+
+//运行
+// $ ./scaner-port.py -i 192.168.61.166 -p 80
+// $ ./scaner-port.py -i 192.168.61.166 -p 1-3500 -t 100
+```
+
+</details>
+
+<details>
+<summary>端口探测_Socket模块_Nmap库</summary>
+
+```
+result = nm.scan(hosts=tragetIP, arguments='-p'+str(targetPort))
+
+# python3 nmap_port_find.py -i 192.168.61.128 -p 80,3306,25
+```
+
+</details>
+
+<details>
+<summary>服务识别</summary>
+
+```
+
+```
+
+</details>
