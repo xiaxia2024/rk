@@ -1314,7 +1314,103 @@ result = nm.scan(hosts=tragetIP, arguments='-p'+str(targetPort))
 <summary>服务识别</summary>
 
 ```
+!#/usr/bin/python3.7
+#!coding:urf-8
+from optparse import OptionParser
+import time
+import socket
+import re
 
+SIGNS = (  //SIGNS值文库，用于对目标主机返回的banner信息进行匹配
+    # 协议 | 版本 | 关键字
+    b'FTP|FTP|^220.*FTP',
+    b'MYSQL|MySQL|mysql_native_password',
+    b'oracle-https|^220- ora',
+    b'Telnet|Telnet|Telnet',
+    b'Telnet|Telnet|^\r\n%connection closed by remote host!\x00$',
+    b'VNC|VNC|^RFB',
+    b'IMAP|IMAP|^\* OK.*?IMAP',
+    b'POP|POP|^\+OK.*?',
+    b'SMTP|SMTP|^220.*?SMTP',
+    b'Kangle|Kangle|HTTP.kangle',
+    b'SMTP|SMTP|^554 SMTP',
+    b'SSH|SSH|^SSH-',
+    b'HTTPS|HTTPS|Location: https',
+    b'HTTP|HTTP|HTTP/1.1',
+    b'HTTP|HTTP|HTTP/1.1',
+    b'HTTP|HTTP|HTTP/1.0',
+)
+
+def main():
+    parser = OptionParser("Usage:%prog -i <target host> ")
+    parser.add_option('-i', type = 'string', dest = 'IP', help='specify target host')
+    parser.add_option('-p', type = 'string', dest = 'PORT', help='specify target host')
+    options,args = parser.parse_args()
+    ip = options.IP
+    port = option.PORT
+    print("Scan report for "+ip+"\n")
+    for line in port.split(','):
+        request(ip,line)
+        time.sleep(0.2)
+    print("\nScan finished!...\n")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("interrupted by user, killing all threads...")
+
+//在request()函数，调用sock.connect()函数探测目标主机端口是否开放
+//利用sock.sendall()函数将PROBE探针发送给目标端口
+//sock.recv()函数用于接收返回的指纹信息，并将指纹信息及端口发送到regex()函数
+def request(ip, port):
+    response = ''
+    PROBE = 'GET / HTTP/1.0\r\n\r\n'
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(10)
+    result = sock.connet_ex((ip, int(port)))
+    if result == 0:
+        try:
+            sock.sendall(PROBE.encode())
+            response = sock.recv(256)
+            if response:
+                regex(response, port)
+        except(ConnetionResetError, socket.timeout):
+            pass
+    else:
+        pass
+    sock.close()
+
+//利用re.search()函数将返回的banner信息与SIGNS包含的指纹信息进行正则匹配，并将匹配结果输出
+//没有在SIGNS中找到相匹配的信息，则输出Unrecognized
+def regex(response, port):
+    text = ""
+    if re.search(b'<title>502  Bad Gateway', response):
+        proto = {"Service failed to access!!")
+    for pattern in  SIGNS:
+        pattern = pattern.split(b'|')
+        if  re.search(pattern[-1], response, re.IGNORECASE):
+            proto = "["+port+"]" + " open " + pattern[1]/decode()
+            break
+        else:
+            proto = "["+port"]" + " open " + "Unrecognized"
+        print(proto)
+
+//运行
+// # python3 port.py -i x.x.x.x -p21,22,80,443,3306,8888,9000,6379
+```
+
+</details>
+
+<details>
+<summary>服务识别_Nmap库</summary>
+
+```
+[1]result = nm.scan(hosts=targetIP, arguments = '-sV -p' + str(targetPort))
+
+[2]print("[{}:{}] : [{}:{}]".format(targetPort, port_infor['state'] , port_infor['name'], port_infor['product']))
+
+# python3 nmap_server_find.py -i IP -p 80,3306
 ```
 
 </details>
