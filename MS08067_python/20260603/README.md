@@ -2534,9 +2534,47 @@ def portscan(url, rurl):
 if __name__ == '__main__':
     portscan('http://www.target.com', '192.168.23.1')
 ----------------------------------------------------------------------------
+防御策略
+
+造成SSRF漏洞的主要原因：
+[1]传入服务器需要访问的地址或需要访问的参数用户可控
+[2]对于用户传入的参数，服务器端没有做校验限制
+比如，一个加载远程头像的功能点，就应该限制传入的参数必须为网址，而不是IP，并且校验网址的后缀是否为图片的地址，否则将不予访问
+----------------------------------------------------------------------------
 ```
 
 </details>
 
+<details>
+<summary>网络代理</summary>
 
-  
+```
+----------------------------------------------------------------------------
+# 代理爬虫，代理VPN，代理注入
+
+URLError:用于捕获网络错误（网络断开，代理连接失败，域名解析失败）
+ProxyHandler：配置代理服务器
+build_opener：根据配置创建一个可以发送请求的对象opener
+----------------------------------------------------------------------------
+# Urlib代理
+
+from urllib.error import URLError 
+from urllib.request import ProxyHandler,build_opener
+
+proxy='127.0.0.1:1087'
+proxy_handler=ProxyHandler({
+    'http':'http://'+proxy,
+    'https':'https://'+proxy
+})
+opener=build_opener(proxy_handler)
+try:
+    response = opener.open('http://httpbin.org/get')
+    print(response.read().decode('utf-8'))
+except URLError as e:
+    print(e.reason)
+----------------------------------------------------------------------------
+
+```
+
+</details>
+
