@@ -2671,3 +2671,51 @@ for item in comments:
         f.write(str(item['id'])+','+item['nickName'] + ',' +
             item['cityName'] + ',' + item['content'] + ',' +
             str(item['score'])+ ',' + item['startTime'] + '\n')
+```
+
+</details>
+
+----------------------------------------------------------------------------
+#### 数据加密_公钥publickey_私钥privatekey
+
+<details>
+<summary>分组密码</summary>
+
+```
+ECB_Electronic CodeBook,电子密码本:固定K 加密解密
+
+CBC_Cipher Block Chaining, 密码块链: 固定K，初始化向量IV进行异或操作，每个分组要先和前一个分组加密的数据 进行XOR异或操作，然后再进行加密
+
+CFB_Cipher Feedback,密码反馈：固定K，前一个分组的密文加密后 和当前分组的明文进行XOR异或操作，生成当前分组的密文
+
+OFB_Output Feedback,输出反馈:将分组密码转化为同步流密码，前一个分组异或之前 的流密码与前分组明文进行XOR处理
+
+CTR_Counter，计数器，同OFB模式相同，分组密码转换为流密码
+----------------------------------------------------------------------------
+PyCryptodome库安装
+
+可以实现 单向加密、对称加密、非对称加密、流加密算法
+
+>>> sudo pip3 install -i https://pypi.douban.com/simple pycryptodome
+
+# linux
+>>> pip3 install -i https://pypi.douban.com/simple pycryptodome
+
+#windows
+C:\Users\x> pip3 install -i https://pypi.douban.com/simple pycryptodome
+```
+
+</details>
+
+<details>
+<summary>base64编码/解码</summary>
+
+```
+jpg、pdf
+
+将二进制数据转换为特定字符串
+
+例如：垃圾信息传播着采用base64编码的方式规避 反垃圾邮件工具
+```
+
+</details>
