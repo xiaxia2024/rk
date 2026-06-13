@@ -2573,8 +2573,101 @@ try:
 except URLError as e:
     print(e.reason)
 ----------------------------------------------------------------------------
+# requests 代理设置
+import requests
+proxy='127.0.0.1:1087'
+proxies={
+    'http':'http://'+proxy,
+    'https':'https://+proxy
+}
+try:
+    response=requests.get('http://httpbin.org/get',proxies=proxies)
+    print(response.text)
+except requests.exceptions.ConnectionError as e:
+    print('error:',e.args)
 
+#运行结果与Urllib代理相同
+----------------------------------------------------------------------------
+付费代理 的使用方法与普通代理的一样，仅仅需要修改proxy值，在代理IP地址前加上‘用户名：密码@’即可
+proxy='username:password@IP:port'
+----------------------------------------------------------------------------
 ```
 
 </details>
 
+<details>
+<summary>爬取某电影评论</summary>
+
+```
+http://m.xxx.com/mmdb/comments/movie/1200486.json?_v_=yes&offset=0&startTime=2018-010-20%2022%3A25%3A03
+# 1200486是指电影的唯一识别ID
+# startTiem对应获取到的评论截止时间，从截止时间向前获取15条评论
+
+#使用requests库的代理方法进行接口访问
+proxy = '127.0.0.1:1087'
+proxies = {
+    'http':'http://' + proxy,
+    'https':'https://' + proxy
+}
+#设置代理地址和端口，让之后的链接都通过此代理来绕过可能存在的反爬虫工具：
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6)
+        AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+}
+#设置一个UA，也可以设置多个UA，每次访问时随机抽取UA避免被检测
+try:
+    print(url)
+    response = requests.get(url,headers=headers, proxies=proxies,timeout=3)
+    if response.status_code == 200:
+        print(response.text)
+        return response.text
+    return None
+except requests.exceptions.ConnectionError as e:
+    print('error:', e.args)
+
+#访问接口URL并判断访问是否成功，若成功，则将数据放回 Process finished with exit code 0
+
+#数据优化的方法，传入原始数据进行处理，并将处理后的结果返回
+def parse_data(html):
+    data = json.loads(html)['cmts']
+    cpmments = []
+    for item in data:
+        comments = {
+            'id': item['id'],
+            'nickName':  item['nickName'],
+            'cityName':  item['cityName'] if 'cityName' in item else '',
+            'content':  item['content'].replace('\n', ' ', 10),
+            'score':  item['score'],
+            'startTime':  item['startTime']
+        }
+        comments.append(comment)
+    return comments
+
+#数据处理完成了，进行循环和保存，
+start_tiem = datatime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+#设置截止时间为上映时间，再往前就没有评论了，循环爬取到截止时间点后停止爬取：
+end_time '上映时间'
+
+#需要循环判断获取的时间是否小于截止的时间点，小于则代表是最早的评论，爬取完成
+while start_time > end_time:
+    url = 'http://m.xxx.com/mmdb/comments/movie/1203084.json?_v_yes&offset=0&startTime=' + start_time.replace(' ', '%20')
+    try:
+        html = get_data(url)  #获取数据
+    except Exception as e:
+        tiem.sleep(0.5)
+        html = get_data(url)
+    else:
+        tiem.sleep(0.1)
+#每次循环获取的末尾评论时间为下次时间时，继续向前获取，再将数据进行处理并保存即可：
+comments = parse_data(html)
+print(comments)
+start_time = comments[14]['startTime']   #获得末尾评论时间
+start_time = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S') + timedelta(seconds=-1)
+start_time = datetime.strftime(start_time, '%Y-%m-%d %H:%M:%S')
+
+for item in comments:
+    with open('data.txt', 'a', encoding='utf-8') as f:
+        f.write(str(item['id'])+','+item['nickName'] + ',' +
+            item['cityName'] + ',' + item['content'] + ',' +
+            str(item['score'])+ ',' + item['startTime'] + '\n')
