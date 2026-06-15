@@ -2910,7 +2910,137 @@ if __name__ == '__main__':
 <summary>社会工程学密码字典_itertools模块</summary>
 
 ```
+----------------------------------------------------------------------------
 # darkweb2017-top10000.txt
+
+[1]permutation(iterable,r):
+从里面挑，然后排序
+返回iterable中元素所有组合长度为r的项目序列，r省略则默认取iterable中项目的数量。
+例如itertools,Permutations('abc',3),从"abc"中按顺序排列组合长度为3进行输出，即abc,acb,bac,bca,cab,cba
+
+[2]product(*iterables[,repeat]):
+可以获取多个循环的 笛卡儿积，每一个集合里的每一个元素，都去和第二个集合里的每一个元素配一次
+例如product("123","abc"),得到的结果是1a,1b,1c,2a,2b,2c,3a,3b,3c
+
+repeat参数是什么？
+list(product("ab",repeat=2))
+相当于 product("ab","ab") ,
+结果：
+aa
+ab
+ba
+bb
+
+list(product("01",repeat=3))
+000
+001
+010
+011
+100
+101
+110
+111
+相当于 product("01","01","01")
+
+[3]repear(object[,times]):
+重复一个元素
+这个函数的作用就是重复元素，未指定times则会一直重复
+例如repeat(100),即100，100，100
+----------------------------------------------------------------------------
+!#/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+import itertools
+
+#创建ReadInformationList()函数，读取用户的个人信息，存入用户信息列表
+def ReadInformationList():
+    try:
+        informationFile = open('person_information', 'r')
+        lines = informationFile.readlines() #按行存入lines
+        for line in lines:
+            infolist.append(line.strip().split(':')[1])
+    except Exception as e:
+        print(e + "\n")
+        print("Read person_information error!")
+
+#创建CreateNumberList()函数，创建数字内容，存入数字列表
+def CreateNumberList():
+    words = "0123456789"
+    itertoolsNumberList = itertools.product(words, repaeat=3)
+    for number in itertoolsNumberList:
+        numberList.append("".join(number))
+
+#创建CreateSpecialList()函数，创建特殊字符，并写入特殊字符列表
+def CreateSpecialList():
+    specialWords = "`!@#$%^&*()?|/><,."
+    for i in specialWords:
+        specialList.append("".join(i))
+
+#创建AddTOpPwd()函数，读取TopPwd文件的内容，先存入字典文件
+def AddTopPwd():
+    try:
+        informationFile = open('TopPwd', 'r')
+        lines = informationFile.readlines()
+        for line in lines:
+            dictionaryFile.write(line)
+    except Exception as e:
+        print(e + "\n")
+        print("Read TopPwd error!")
+
+#创建Combination()函数，字典生成算法主体，读者也可以增加自己的代码
+def Combination():
+    for a in range(len(infolist)):
+        if (len(infolist[a]) >= 8): #把个人信息大于等于8位的直接输出到字典
+            dictionaryFile.write(infolist[a] + '\n')
+        else:
+            needWords = 8 - len(infolist[a])  #对于小于8的个人信息，利用数字补全到8位输出
+            for b in itertools.permutations("1234567890", needWords):
+                dictionaryFile.write(infolist[a] + ''.join(b) + '\n')
+
+        for c in range(0, len(infolist)):     #把个人信息元素两两进行相互拼接，大于等于8位的输出到字典
+            if (len(infolist[a] + infolist[c]) >= 8):
+                dictionaryFile.write(infolist[a] + infolist[c] + '\n')
+        for d in range(0, len(infolist)):    #在两个人信息元素中加入特殊字符组合起来，大于等于8位就输出到字典
+            for e in range(0, len(speciaList)):
+                if (len(infolist[a] + specialList[e] + infolist[d]) >= 8):
+                    dictionaryFile.write(infolist[a] + infolist[d] + specialList[e] + '\n') #特殊字符加在尾部
+                    dictionaryFile.write(infolist[a] + specialList[e] + infolist[d] + '\n') #特殊字符加在中部
+                    dictionaryFile.write(specialList[e] + infolist[a] + infolist[d] + '\n')  #特殊字符加在头部
+    dictionaryFile.close()
+
+if __name__ == '__main__':
+    global dictionaryFile
+    dictionaryFile = open('passwords', 'w')
+
+    global infolist #用户信息列表
+    infolist = []
+
+    global numberList
+    numberList = []
+
+    global specialList   #特殊字符列表
+    specialList = []
+
+    ReadInformationList() #读取个人信息文件dictionaryFile
+
+    CreateNumberList()
+
+    CreateSpecialList()
+
+    AddTopPwd()      #把常见密码先写入字典文件
+
+    Combination()     #字典生成主体，将个人信息+数字列表+特殊字符列表进行组合并加入字典
+
+    print('\n' + u "字典生成成功!" + '\n' + '\n' + u "字典文件名: passwords")
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>后台弱口令_phpStudy</summary>
+
+```
 
 ```
 
