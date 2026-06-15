@@ -2825,6 +2825,93 @@ Nr = max(4,8) + 6 =14， Nr = max(8,4) + 6 =14， Nr = max(6,8) + 6 =14， Nr = 
 AES加密算法的轮函数 采用 代替/置换网络结构
 
 S盒变换(ByteSub),行移位(ShiftRow),列混合变换(MixColumn）,圈密钥加变换(AddRoundKey)
+
+非线性字节变换，   循环移位，        多项式，              模2相加变换
+----------------------------------------------------------------------------
+AES 加密
+>>> from Cryptodome.Cipher import AES
+>>> import binascii
+>>> key = b'abcdefghabcdefgh'
+>>> text = text + (16 - (len(text) & 16)) * '='
+>>> aes = AES.new(key, AES.MODE_ECB)
+>>> encrypto_text = aes.encrypt(text.encode())
+>>> encryptResult = binascii.b2a_hex(encrypto_text)
+>>> print(text)
+>>> print(encryptResult)
+
+AES 解密
+>>> from Cryptodome.Cipher import AES
+>>> import binascii
+>>> key = b'abcdefghabcdefgh'
+>>> encrypto_text = binascii.a2b_hex(encryptoResult)
+>>> decryptResult = aes.decrypt(encrypto_text)
+>>> print(decryptResult)
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>MD5机密算法_hashlib模块</summary>
+
+```
+----------------------------------------------------------------------------
+四个32位的分组结合后将生成一个128位的散列值，“+” 代表mod 2的32次方，4*128=512位
+
+512-64=448
+
+[1]填充
+将信息进行填充，使其位长对512求余后的结果等于448，信息位长扩展至N * 512 + 448
+[2]信息分组 每512位位一组，再把每组里面分成16个32位数据
+[3]初始化变量
+
+初始化4个32位寄存器（链接变量)
+A 0x67452301 即  A= 01 23 45 67
+B 0xEFCDAB89     B= 89 AB CD EF
+C 0x98BACDEF     C= FE DC BA 98
+D 0x10234567     D= 76 54 32 10
+安置小端存储，初始值Initial Value,IV
+
+非线性函数
+
+第一轮 F函数 F(X,Y,Z)=(X ∩ Y) ∪ (~X ∩ Z)     python表示 F = (X & Y) | (~X & Z) ,X为1，则选择Y；X为0，则选择Z. Choose(选择函数)
+
+第二轮 G函数 G(X,Y,Z)=(X ∩ Z) ∪ (Y ∩ ~Z)     python表示 G = (X & Z) | (Y & ~Z) ，换一种选择
+
+第三轮 H函数 H(X,Y,Z) = X ⊕ Y ⊕ Z            python表示 H = X^Y^Z (^和⊕ 表示异或XOR）  1⊕1=0，1⊕0=1，0⊕0=0；；；1⊕0⊕1=1⊕1=0，混合(Mix)
+
+第四轮 I函数 I(X,Y,Z) = Y ⊕ (X ∪ ~Z)         python表示 I=Y^(X | ~Z)    NOT(~),OR(|),XOR(^)让最后一轮的数据变化更加随机,进一步打乱(Scramble)
+
+每轮16步，4*16=64步，每轮使用一个非线性函数
+----------------------------------------------------------------------------
+# hashlib标准库：SHA1,SHA224,SHA256,SHA384,SHA512,MD5算法
+
+from hashlib import  md5
+
+def encrypt_md5(s):
+    new_md5 = md5()
+    new_md5.update(s.encode(encoding='utf-8'))
+    return new_md5.hexdigest()
+
+if __name__ == '__main__':
+    print(encrypt_md5('xxx'))
+
+#MD5算法所产生的32位输出所能够表示的空间大小为1632，即当样本大于1632时就会产生Hash碰撞
+#散列函数对随机字符串(Salt)进行MD5加密
+----------------------------------------------------------------------------
+```
+
+</details>
+
+----------------------------------------------------------------------------
+#### 身份认证
+
+<details>
+<summary>社会工程学密码字典_itertools模块</summary>
+
+```
+# darkweb2017-top10000.txt
+
 ```
 
 </details>
