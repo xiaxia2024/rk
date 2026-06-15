@@ -2711,11 +2711,120 @@ C:\Users\x> pip3 install -i https://pypi.douban.com/simple pycryptodome
 <summary>base64编码/解码</summary>
 
 ```
+----------------------------------------------------------------------------
 jpg、pdf
 
 将二进制数据转换为特定字符串
 
 例如：垃圾信息传播着采用base64编码的方式规避 反垃圾邮件工具
+----------------------------------------------------------------------------
+ASCII ----> Base64
+
+[1]ASCII码 -> 二进制(8位) -> 划分6位 -> 在每个最高为补2个0，变8位 -> 二进制 -> Base64
+[2]ASCII码 -> 二进制(8位) -> 不够划分6位，在不够6位的位置补上0(地位) ->  在每个最高为补2个0，变8位 -> 二进制 -> Base64(则以'='填充)
+严格意义上Base64编码算法不算加密算法，转码的规则是公开
+----------------------------------------------------------------------------
+Base64编码方式
+
+>>> import base64
+>>> s = 'xx'
+>>> bs = base64.b64encode(s.encode("utf-8"))
+>>> print(bs)
+
+Base64解码方式
+
+>>> import base64
+>>> bs = 'xxx'
+>>> bbs = str(base64.b64encode(bs),"utf-8")
+>>> print(bbs)
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>DES算法_Cryptodome库</summary>
+
+```
+----------------------------------------------------------------------------
+DES ：64位明文输入+64位密钥
+
+DES 为分组密钥的加密方式，其工作模式有五种：ECB,CBC,CTR,CFB,OFB
+----------------------------------------------------------------------------
+ECB模式_电子密码本
+
+DES加密
+>>> from Cryptodome.Cipher import DES
+>>> import binascii 
+>>> key = b'abcdefgh' #key的长度须为8字节
+>>> des = DES.new(key, DES.MODE_ECB) #ECB模式
+>>> text = 'XXX'
+>>> text = text + (8 - (len(text) % 8)) * '='       # 补充8个字节
+>>> encrypt_text = des.encrypt(text.encode())       #加密 des.encrypt()
+>>> encryptResult = binascii.b2a_hex(encrypt_text)  #转换 a2b_hex ACSII(十六进制字符串) --> Binary(二进制)
+>>> print(text)
+>>> print(encryptResult)
+----------------------------------------------------------------------------
+encode()：字符串 → 字节
+des.encrypt()：字节 → 加密后的字节
+binascii.b2a_hex()：加密后的字节 → 十六进制表示
+----------------------------------------------------------------------------
+DES解密
+>>> from Cryptodome.Cipher import DES
+>>> import binascii
+>>> key = b'abcdefgh'
+>>> des = DES.new(key, DES.MODE_ECB)
+>>> encryptResult = b'b81fcb047936afb76487dda463334767'  #前面有个b,保存加密后的结果
+>>> encrypto_text = binascii.a2b_hex(encryptResult)      #a2b_hex ACSII(十六进制字符串) --> Binary(二进制)
+>>> decryptResult = des.decrypt(encrypto_text)           #des.decrypt 解密
+>>> print(decryptResult)
+----------------------------------------------------------------------------
+建议使用PKCS5/PKCS7填充，而不是手动补=
+
+from Cryptodome.Cipher import DES
+from Cryptodome.Util.Padding import pad, unpad
+import binascii
+
+key = b'abcdefgh'
+des = DES.new(key, DES.MODE_ECB)
+
+text = "XXX"
+
+# 加密
+cipher = des.encrypt(pad(text.encode(), 8))
+print(binascii.hexlify(cipher).decode())
+
+# 解密
+plain = unpad(des.decrypt(cipher), 8)
+print(plain.decode())
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>AES算法</summary>
+
+```
+----------------------------------------------------------------------------
+Rijndael算法
+
+[1]Nb (number of Blocks):状态矩阵的列数（块长度/32）
+块长 128位 -> Nb = 4
+块长 192位 -> Nb = 6
+块长 256位 -> Nb = 8
+[2]Nk (Number of Keys):密钥长度/32
+密钥 128位 -> Nk=4
+密钥 192位 -> Nk=6
+密钥 256位 -> Nk=8
+[3]Nr (Number of Rounds):加密轮数 Nr = max(Nb,Nk)+6
+Nr = max(4,4) + 6 =10
+Nr = max(6,4) + 6 =12， Nr = max(4,6) + 6 =12， Nr = max(6,6) + 6 =12
+Nr = max(4,8) + 6 =14， Nr = max(8,4) + 6 =14， Nr = max(6,8) + 6 =14， Nr = max(8,6) + 6 =14，Nr = max(8,8) + 6 =14
+----------------------------------------------------------------------------
+AES加密算法的轮函数 采用 代替/置换网络结构
+
+S盒变换(ByteSub),行移位(ShiftRow),列混合变换(MixColumn）,圈密钥加变换(AddRoundKey)
 ```
 
 </details>
