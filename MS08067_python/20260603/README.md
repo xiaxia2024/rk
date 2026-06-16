@@ -3039,11 +3039,11 @@ if __name__ == '__main__':
 </details>
 
 <details>
-<summary>后台弱口令_phpStudy</summary>
+<summary>后台弱口令_phpStudy_下个脚本解析</summary>
 
 ```
 ----------------------------------------------------------------------------
-难点
+[1]
 def partition(ls, size):
     return [ls[i:i+size] for i in range(0, len(ls),size)]
 #这个函数是 把一个列表按照指定大小分成若干小列表
@@ -3072,6 +3072,7 @@ for i in range(0, len(ls),size):
 
 return result
 ----------------------------------------------------------------------------
+[2]
 #创建线程 workThread = threading.Thread(target=work.start)
 
 work.start() ---现在就执行
@@ -3079,9 +3080,11 @@ target=work.start  ---告诉线程以后执行
 t.start()   ---  真正启动线程，让线程开始执行work.start
 join()   ---主程序等待这个线程结束
 ----------------------------------------------------------------------------
+[3]
 response = requests.post()
 向指定网址发送一个HTTP POST请求，并把用户名和密码作为数据提交
 ----------------------------------------------------------------------------
+[4]
 把线程要执行的任务封装到一个类(ThreadWork）里面，所有才有__init__()类的构造函数
 即work = ThreadWord(sonUserBlock,sonPwdBlock)      # work 是对象，Object,实例
   workThread = threading.Thread(target=work.start) #ThreadWork 类，Class
@@ -3089,6 +3092,14 @@ response = requests.post()
 class ThreadWork:
   def __init__(self,username,password) # self = work, 类ThreadWork只是模版
 ----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>后台密码爆破脚本</summary>
+  
+```
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
@@ -3164,7 +3175,16 @@ class ThreadWork:
 if __name__ == '__main__':
     
     BruteForceHttp()
-----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>破解SSH口令脚本</summary>
+
+```
+
+
 ```
 
 </details>
