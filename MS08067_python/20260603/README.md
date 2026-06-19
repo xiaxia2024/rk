@@ -3592,3 +3592,126 @@ http://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
 </details>
 
 ----------------------------------------------------------------------------
+####流量分析
+
+<details>
+<summary>流量嗅探_Scapy模块_sniff()函数</summary>
+
+```
+----------------------------------------------------------------------------
+iface:指定在哪个网络接口上抓包
+count:表示要捕获数据包的数量。默认值为0，表示不限制数量
+filter:流量的过滤规则。使用的是BPF（Berkeley Packet Filter,柏克莱封包过滤器)语法
+prn:定义回调函数，通常使用lambda表达式写回调函数。
+
+BPF的过滤规则（表达式）由一个或多个原语组成，每个原语通常由一个标识（ID，名称或数字）和一个或多个限定词组成
+Type：类型限定词，host,net,port ;若不指定，默认为host
+Dir: 方向限定词，src,dst,src,dst
+Proto:协议限定词，tcp,udp,ip,arp
+
+ether src host 00:88:ca:86:f8:0d  #只捕获与网络中某一MAC地址的主机的交互流量
+src host 192.168.10.1  #只捕获来源于网络中某一IP的主机流量
+dst host 192.169.10.1  #只捕获去往网站中某一IP的主机的流量
+port 80
+!port 80  #只捕获除80端口以外的其他端口的流量
+ICMP
+src host 192.168.10.1 && dst port 80  #只捕获源地址为192.168.10.1且目的端口为80的流量
+----------------------------------------------------------------------------
+>>> sniff(filter="dst 112.80.248.76")
+----------------------------------------------------------------------------
+~$ sudo python3
+>>> from scapy.all import *
+>>> sniff(filter="dst 112.80.248.76")
+另~$ ping 112.80.248.76
+# 只有取消捕获时才有出现结果
+----------------------------------------------------------------------------
+~$ sudo python3
+>>> from scapy.all import *
+>>> sniff(filter="dst 112.80.248.76"，prn=lambda x:x:.summary())
+另~$ ping 112.80.248.76
+#实时显示捕获到的数据包要加上Prn选项，具体内容为prn=lambda x:x:.summary()
+----------------------------------------------------------------------------
+~$ sudo python3
+>>> from scapy.all import *
+>>> sniff(filter="dst 112.80.248.76"，prn=lambda x:x[IP].src+"---->"+x[IP].dst)
+另~$ ping 112.80.248.76
+# 打印 源IP和目的IP
+----------------------------------------------------------------------------
+~$ sudo python3
+>>> from scapy.all import *
+
+# 定义一个CallBack()回调函数，然后让prn调用即可
+>>> def CallBack(packet):
+...    print("Source:%s--->Target:%s"%(packet[IP].src, packet[IP].dst))
+...    print("TTL:%s"%packet[IP].ttl)
+...    print(packet.show()) #使用内置函数show()打印数据包的内容
+
+>>> sniff(filter="dst 112.80.248.76", prn=CallBack())
+另~$ ping 112.80.248.76
+# 打印 源IP和目的IP
+----------------------------------------------------------------------------
+#保存数据包的格式为pcap,借助wrpcap()函数
+~$ sudo python3
+>>> from scapy.all import *
+>>> packet = sniff(filter="dst 112.80.248.76", count=4)
+>>> wrpcap("xxx.pcap", packet)
+
+另~$ ping 112.80.248.76
+# 打印 源IP和目的IP
+----------------------------------------------------------------------------
+然后可以调用Wireshark查看数据包
+----------------------------------------------------------------------------
+```
+
+</details>
+
+<details>
+<summary>流量嗅探_Scapy模块_sniff()函数_保存pcap格式</summary>
+
+```
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+from scapy.all import *
+import time
+import optparse
+
+def PackCallBack(packet):
+    print("*"*30)
+    print("[%s]Source:%s:%s--->Target:%s:%s"%(TimeStamp2Time(packet.time),
+        packet[ip].src, packet.sport, packet[IP].dst, packet.dport))
+    #print("[%s]Source:%s:%s--->Target:%s:%s"%(packet.tiem, packet[IP].src, 4444, packet[IP].dst, 5555))
+    pritn(packet.show())
+    print("*"*30)
+
+# 时间戳转换函数
+def TimeStamp2Tiem(timeStamp):
+    timeTmp = time.localtime(timeStamp) #[1]localtime()把时间转成一个时间结构
+    myTime = time.strftiem（“%Y-%m-%d %H:%M:%S", timeTmp) #strftime()把时间格式化
+    return myTime
+
+if __name__ == '__main__':
+    parser = optparse.PotionParser("Ecample:python %prog -i 127.0.0.1 -c 5 -o xxx.pcap\n")
+    parser.add_option('-i', '--IP', dest='hostIP',
+        default="127.0.0.1", type = 'string',
+        help = 'IP address [default = 127.0.0.1]')
+
+    parser.add_option('-c', '--count', dest='packetCount',
+        default="5", type = 'int',
+        help = 'Packet count [default = 5]')
+
+    parser.add_option('-o', '--output', dest='fileName',
+        default="xxx.pcap", type = 'string',
+        help = 'save filename [default = xxx.pcap]')
+
+    (options, args) = parser.parse_argsp()
+    defFilter = "dst "  + options.hostIP
+    packets = sniff(filter=defFilter, prn=PackCallBack, count=opyions.packetCount)
+    wrpcap(options.fileName, packets)
+
+#使用root权限 打开一个终端进行监听，另一个终端使用curl命令
+# $ sudo python3 sniff.py -1 112.80.248.76 -o xxx.pcap
+# ~$ curl 112.80.248.76
+# 会生成xxx.pcap文件，打开Wireshark查看
+```
+
+</details>
