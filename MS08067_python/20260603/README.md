@@ -4121,6 +4121,7 @@ if __name__ == "__main__":
 <summary>subprocess模块</summary>
 
 ```
+----------------------------------------------------------------------------
 subprocess模块主要作用：执行外部的命令和程序
 
 子进程
@@ -4167,3 +4168,57 @@ subprocess.check_output(args, *, stdin = None, stderr = None, shell = False, cwd
 ```
 
 </details>
+
+<details>
+<summary>Struct模块</summary>
+
+```
+Struck模块 解决Socket传输数据时粘包的问题
+
+Python 6种数据类型：数字、字符串、列表、元组、字典、集合；没有定义字节类型的数据，因此在Socket数据传输中需要转换为字节流
+
+主要函数pack(),unpack(),calczsize()
+
+format格式
+----------------------------------------------------------------------------
+Format    C Type           Python         字节数
+x   pad byte(填充字节)       no value
+c         char         string of length 1  1
+b          signed char     integer         1
+B          unsigned char    integer        1
+?          _Bool            bool           1
+h          short            integer        2
+H         unsigned int      integer        2
+i          int              integer        4
+I         unsigned int      integer        4
+l          long             integer        4
+L         unsigns long      integer        4
+q         long long         integer        8
+Q         unsigned long long integer       8
+f         float       f      loat          4
+d         double              float        8
+s         char[]            bytes        
+p         char[]            bytes        
+P         void*             integer
+----------------------------------------------------------------------------
+[1]struct.pack(format, v1, v2,...)
+>>> import struck
+>>> into_pack = struck.pack('7s', 'xxx'.encode())
+>>> print(info_pack)
+b'xxx'
+>>>
+#该方法返回一个bytes对象，其中包含格式字符串format以及打包的值v1,v2,...,参数个数必须与格式字符串所要求的值完全匹配
+
+[2]struck.unpack(format, buffer)
+>>> lab_name = struck.unpack('7s', info_pack)
+>>> print(lab_name)
+(b'xxx',)
+>>>
+#该方法根据格式字符串format从缓存区buffer解包（假定是由pack(format,...),打包）；结果为一个元组，即使其只包含一个条目
+
+[3]struck.clcsize(format)
+>>> struck.calcsize('7s')
+7
+>>>
+#该方法计算格式字符串所对应的结果的长度
+```
